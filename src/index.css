@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    /* Minimalist Archive - Warm Paper Theme */
+    --background: 38 30% 98%;    /* Warm Cream #FDFBF7 */
+    --foreground: 24 7% 16%;     /* Warm Charcoal #2C2926 */
+ 
+    --card: 0 0% 100%;           /* Pure White #FFFFFF */
+    --card-foreground: 24 7% 16%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 7% 16%;
+ 
+    --primary: 24 10% 15%;       /* Deep Warm Grey */
+    --primary-foreground: 38 30% 98%;
+ 
+    --secondary: 38 20% 94%;     /* Darker Cream/Stone */
+    --secondary-foreground: 24 7% 16%;
+ 
+    --muted: 38 15% 90%;         /* Stone */
+    --muted-foreground: 24 5% 45%;
+ 
+    --accent: 38 25% 92%;        /* Warm Highlight */
+    --accent-foreground: 24 10% 15%;
+ 
+    --destructive: 0 60% 60%;    /* Soft Red */
+    --destructive-foreground: 38 30% 98%;
+ 
+    --border: 38 15% 88%;        /* Warm Border */
+    --input: 38 15% 88%;
+    --ring: 24 10% 15%;
+ 
+    --radius: 0.75rem;           /* Softer corners */
+  }
+ 
+  .dark {
+    /* Dark Mode - Warm Night */
+    --background: 24 10% 10%;
+    --foreground: 38 30% 90%;
+ 
+    --card: 24 10% 12%;
+    --card-foreground: 38 30% 90%;
+ 
+    --popover: 24 10% 12%;
+    --popover-foreground: 38 30% 90%;
+ 
+    --primary: 38 30% 90%;
+    --primary-foreground: 24 10% 10%;
+ 
+    --secondary: 24 10% 16%;
+    --secondary-foreground: 38 30% 90%;
+ 
+    --muted: 24 10% 16%;
+    --muted-foreground: 24 5% 60%;
+ 
+    --accent: 24 10% 18%;
+    --accent-foreground: 38 30% 90%;
+ 
+    --destructive: 0 50% 50%;
+    --destructive-foreground: 38 30% 90%;
+ 
+    --border: 24 10% 20%;
+    --input: 24 10% 20%;
+    --ring: 38 30% 80%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animations */
+  .animate-in {
+    animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+  
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Paper Shadow */
+  .shadow-paper {
+    box-shadow: 
+      0 1px 2px 0 rgb(0 0 0 / 0.05),
+      0 4px 6px -1px rgb(0 0 0 / 0.02),
+      0 2px 4px -1px rgb(0 0 0 / 0.02);
+  }
+}

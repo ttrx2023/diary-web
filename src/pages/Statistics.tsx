@@ -313,7 +313,7 @@ export default function Statistics() {
         </CardContent>
       </Card>
 
-      {/* Content Statistics - Clickable Cards with Previews */}
+      {/* Content Statistics - Clickable Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Thoughts Card */}
         <Card
@@ -335,18 +335,6 @@ export default function Statistics() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.entriesWithThoughts}</p>
             <p className="text-xs text-muted-foreground">entries with reflections</p>
-            {/* Preview: Latest thought snippet */}
-            {allEntries.length > 0 && (() => {
-              const latestWithThoughts = allEntries.find(e => e.thoughts);
-              if (latestWithThoughts?.thoughts) {
-                return (
-                  <p className="text-xs text-muted-foreground/70 mt-2 truncate italic">
-                    "{latestWithThoughts.thoughts.slice(0, 40)}..."
-                  </p>
-                );
-              }
-              return null;
-            })()}
           </CardContent>
         </Card>
 
@@ -370,32 +358,6 @@ export default function Statistics() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.entriesWithDiet}</p>
             <p className="text-xs text-muted-foreground">days tracking meals</p>
-            {/* Preview: Today's meal status dots */}
-            {(() => {
-              const today = format(new Date(), "yyyy-MM-dd");
-              const todayEntry = allEntries.find(e => e.date === today);
-              const meals = [
-                { key: 'breakfast', label: '早', filled: !!todayEntry?.diet?.breakfast },
-                { key: 'lunch', label: '午', filled: !!todayEntry?.diet?.lunch },
-                { key: 'dinner', label: '晚', filled: !!todayEntry?.diet?.dinner },
-                { key: 'snacks', label: '零', filled: !!todayEntry?.diet?.snacks },
-              ];
-              return (
-                <div className="flex gap-1.5 mt-2">
-                  {meals.map(m => (
-                    <span
-                      key={m.key}
-                      className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded",
-                        m.filled ? "bg-green-500/20 text-green-600" : "bg-muted text-muted-foreground/50"
-                      )}
-                    >
-                      {m.label}
-                    </span>
-                  ))}
-                </div>
-              );
-            })()}
           </CardContent>
         </Card>
 
@@ -419,29 +381,6 @@ export default function Statistics() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalExercises}</p>
             <p className="text-xs text-muted-foreground">workouts logged</p>
-            {/* Preview: Exercise type breakdown */}
-            {(() => {
-              const typeCount = { reps: 0, duration: 0, distance: 0 };
-              allEntries.forEach(e => {
-                e.exercises?.forEach(ex => {
-                  if (ex.type in typeCount) typeCount[ex.type as keyof typeof typeCount]++;
-                });
-              });
-              if (stats.totalExercises === 0) return null;
-              return (
-                <div className="flex gap-2 mt-2">
-                  {typeCount.reps > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600">💪 {typeCount.reps}</span>
-                  )}
-                  {typeCount.duration > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600">⏱️ {typeCount.duration}</span>
-                  )}
-                  {typeCount.distance > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600">🏃 {typeCount.distance}</span>
-                  )}
-                </div>
-              );
-            })()}
           </CardContent>
         </Card>
 
@@ -463,25 +402,7 @@ export default function Statistics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3">
-              <p className="text-2xl font-bold">{stats.completedTodos}</p>
-              {/* Mini completion ring */}
-              {stats.totalTodos > 0 && (
-                <div className="relative w-8 h-8">
-                  <svg className="w-8 h-8 -rotate-90">
-                    <circle cx="16" cy="16" r="12" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
-                    <circle
-                      cx="16" cy="16" r="12" fill="none" stroke="hsl(270 60% 60%)" strokeWidth="3"
-                      strokeDasharray={`${completionRate * 0.754} 100`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold">
-                    {completionRate}%
-                  </span>
-                </div>
-              )}
-            </div>
+            <p className="text-2xl font-bold">{stats.completedTodos}</p>
             <p className="text-xs text-muted-foreground">{stats.completedTodos}/{stats.totalTodos} completed</p>
           </CardContent>
         </Card>
@@ -506,32 +427,6 @@ export default function Statistics() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalDiscoveries}</p>
             <p className="text-xs text-muted-foreground">insights captured</p>
-            {/* Preview: Category breakdown */}
-            {(() => {
-              const catCount = { idea: 0, learning: 0, inspiration: 0, other: 0 };
-              allEntries.forEach(e => {
-                e.discoveries?.forEach(d => {
-                  if (d.category in catCount) catCount[d.category as keyof typeof catCount]++;
-                });
-              });
-              if (stats.totalDiscoveries === 0) return null;
-              return (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {catCount.idea > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600">💡 {catCount.idea}</span>
-                  )}
-                  {catCount.learning > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600">📚 {catCount.learning}</span>
-                  )}
-                  {catCount.inspiration > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-600">✨ {catCount.inspiration}</span>
-                  )}
-                  {catCount.other > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-600">⚡ {catCount.other}</span>
-                  )}
-                </div>
-              );
-            })()}
           </CardContent>
         </Card>
 
@@ -546,19 +441,6 @@ export default function Statistics() {
           <CardContent>
             <p className="text-2xl font-bold">{stats.totalEntries}</p>
             <p className="text-xs text-muted-foreground">journal entries</p>
-            {/* Preview: Last 7 days mini heatmap */}
-            <div className="flex gap-1 mt-2">
-              {stats.weeklyActivity.map((day) => (
-                <div
-                  key={day.date}
-                  className={cn(
-                    "w-4 h-4 rounded-sm transition-colors",
-                    day.hasEntry ? "bg-indigo-500" : "bg-muted"
-                  )}
-                  title={day.date}
-                />
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>

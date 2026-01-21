@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,51 @@ const categoryConfig: Record<DiscoveryCategory, { label: string; color: string; 
   inspiration: { label: "Inspiration", color: "text-pink-500 bg-pink-500/10 border-pink-500/30", emoji: "✨" },
   other: { label: "Other", color: "text-gray-500 bg-gray-500/10 border-gray-500/30", emoji: "⚡" },
 };
+
+// Auto-resize textarea component
+function AutoResizeTextarea({
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+  }, []);
+
+  // Adjust height on mount and when value changes
+  useEffect(() => {
+    adjustHeight();
+  }, [value, adjustHeight]);
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        adjustHeight();
+      }}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      className={className}
+      rows={1}
+    />
+  );
+}
 
 export function DiscoverySection({ date }: DiscoverySectionProps) {
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
@@ -156,19 +201,12 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0 overflow-hidden">
-                        <Textarea
+                        <AutoResizeTextarea
                           value={item.content}
-                          onChange={(e) => {
-                            updateDiscoveryContent(item.id, e.target.value);
-                            // Auto-resize textarea
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                          }}
+                          onChange={(value) => updateDiscoveryContent(item.id, value)}
                           onBlur={handleBlur}
                           placeholder="What did you discover?"
                           className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden whitespace-pre-wrap break-words w-full"
-                          rows={1}
-                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                         />
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

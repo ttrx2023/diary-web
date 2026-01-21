@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { PenLine, Cloud } from "lucide-react";
+import { PenLine } from "lucide-react";
 
 interface ThoughtsSectionProps {
   date: string;
 }
 
 export function ThoughtsSection({ date }: ThoughtsSectionProps) {
-  const { entry, updateEntry, isSaving, isLoading } = useDiaryEntry(date);
+  const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [localThoughts, setLocalThoughts] = useState("");
 
   useEffect(() => {
@@ -36,12 +36,6 @@ export function ThoughtsSection({ date }: ThoughtsSectionProps) {
           </div>
           <CardTitle className="text-xl font-serif font-bold">Thoughts & Reflection</CardTitle>
         </div>
-        {isSaving && (
-             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary animate-pulse">
-                <Cloud className="w-3 h-3" />
-                Saving
-            </span>
-        )}
       </CardHeader>
       <CardContent className="flex-1 p-0">
         <div className="relative h-full">
@@ -53,7 +47,6 @@ export function ThoughtsSection({ date }: ThoughtsSectionProps) {
             onBlur={handleBlur}
             disabled={!isInteractive}
             />
-            {/* Lined paper effect overlay if desired, or just clean space */}
         </div>
       </CardContent>
     </Card>

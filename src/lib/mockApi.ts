@@ -22,6 +22,8 @@ function normalizeEntry(entry: Partial<DailyEntry>, date: string): DailyEntry {
     },
     exercises: Array.isArray(entry.exercises) ? entry.exercises : [],
     todos: Array.isArray(entry.todos) ? entry.todos : [],
+    discoveries: Array.isArray(entry.discoveries) ? entry.discoveries : [],
+    isFavorite: entry.isFavorite || false,
     created_at: entry.created_at || new Date().toISOString(),
   };
 }

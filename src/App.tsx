@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import Statistics from "./pages/Statistics";
 import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,7 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="history" element={<History />} />
+        <Route path="statistics" element={<Statistics />} />
         <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
@@ -60,11 +63,13 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

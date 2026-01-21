@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A personal journaling application built with React, TypeScript, and Supabase. The app supports both local-only mode (localStorage) and cloud-sync mode (Supabase), allowing users to track daily thoughts, diet, and exercises across multiple devices.
+A personal journaling application built with React, TypeScript, and Supabase. The app supports both local-only mode (localStorage) and cloud-sync mode (Supabase), allowing users to track daily thoughts, diet, exercises, and todos across multiple devices.
 
 ## Development Commands
 
@@ -61,8 +61,11 @@ All data access goes through `src/hooks/useDiary.ts`, which uses TanStack Query 
 
 The core entity is `DailyEntry` (see `src/types/index.ts`):
 - One entry per date (YYYY-MM-DD format)
-- Contains: `thoughts` (string), `diet` (object with meals), `exercises` (array)
-- Each exercise has a `type` field: 'reps' | 'duration' | 'distance'
+- Contains:
+  - `thoughts` (string)
+  - `diet` (object with meals)
+  - `exercises` (array of items with type 'reps' | 'duration' | 'distance')
+  - `todos` (array of `TodoItem` objects with completion status)
 
 ## Environment Configuration
 
@@ -88,7 +91,7 @@ The database table is `daily_entries` with RLS policies that restrict access to 
 
 ## File Structure Conventions
 
-- **Components**: `src/components/ui/` for reusable UI (shadcn/ui), `src/components/diary/` for feature components
+- **Components**: `src/components/ui/` for reusable UI (shadcn/ui), `src/components/diary/` for feature components, `src/components/export/` for export features
 - **Pages**: `src/pages/` for route-level components (Dashboard, History, Settings, Auth)
 - **Hooks**: Custom hooks in `src/hooks/`, prefixed with `use`
 - **Lib**: Utilities and API integrations in `src/lib/`

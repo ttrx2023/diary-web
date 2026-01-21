@@ -9,6 +9,16 @@ export interface TodoItem {
   completedAt?: string;
 }
 
+// Discovery item for daily insights
+export type DiscoveryCategory = 'idea' | 'learning' | 'inspiration' | 'other';
+
+export interface DiscoveryItem {
+  id: string;
+  content: string;
+  category: DiscoveryCategory;
+  createdAt: string;
+}
+
 export interface ExerciseItem {
   id: string;
   name: string;
@@ -31,6 +41,8 @@ export interface DailyEntry {
   diet: DietEntry;
   exercises: ExerciseItem[];
   todos: TodoItem[];
+  discoveries: DiscoveryItem[];
+  isFavorite?: boolean;
   created_at?: string;
   user_id?: string;
 }

@@ -118,5 +118,7 @@ function defaultEntry(date: string): DailyEntry {
       diet: { breakfast: "", lunch: "", dinner: "", snacks: "" },
       exercises: [],
       todos: [],
+      discoveries: [],
+      isFavorite: false,
     };
 }

@@ -18,7 +18,7 @@ const emptyDiet: DietEntry = {
 };
 
 export function DietSection({ date }: DietSectionProps) {
-  const { entry, updateEntry, isSaving, isLoading } = useDiaryEntry(date);
+  const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [diet, setDiet] = useState<DietEntry>(entry?.diet ?? emptyDiet);
 
   useEffect(() => {
@@ -49,12 +49,6 @@ export function DietSection({ date }: DietSectionProps) {
           </div>
           <CardTitle className="text-xl font-serif font-bold">Diet Log</CardTitle>
         </div>
-        {isSaving && (
-             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Saving
-            </span>
-        )}
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         <div className="grid gap-4">

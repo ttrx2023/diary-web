@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition, useMemo } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { ThoughtsSection } from "@/components/diary/ThoughtsSection";
 import { DietSection } from "@/components/diary/DietSection";
 import { ExerciseSection } from "@/components/diary/ExerciseSection";
 import { TodoSection } from "@/components/diary/TodoSection";
-import { CalendarIcon } from "lucide-react";
+import { DiscoverySection } from "@/components/diary/DiscoverySection";
+import { useDiaryEntry, usePrefetchDates } from "@/hooks/useDiary";
+import { Star, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const isValidDateParam = (value: string | null) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -15,15 +18,33 @@ const getTodayString = () => {
   return now.toISOString().split('T')[0];
 };
 
+const formatDisplayDate = (dateStr: string) => {
+  const date = new Date(`${dateStr}T00:00:00`);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawDateParam = searchParams.get("date");
   const dateParam = isValidDateParam(rawDateParam) ? rawDateParam : null;
   const [date, setDate] = useState(() => dateParam ?? getTodayString());
+  const [isPending, startTransition] = useTransition();
+
+  const { entry, updateEntry, isFetching } = useDiaryEntry(date);
+  const { prefetchAdjacent } = usePrefetchDates(date);
+
+  const displayDateText = useMemo(() => formatDisplayDate(date), [date]);
+  const isToday = useMemo(() => date === getTodayString(), [date]);
 
   useEffect(() => {
     if (dateParam && dateParam !== date) {
-      setDate(dateParam);
+      startTransition(() => {
+        setDate(dateParam);
+      });
       return;
     }
 
@@ -36,53 +57,144 @@ export default function Dashboard() {
     }
   }, [dateParam, date, setSearchParams]);
 
+  useEffect(() => {
+    prefetchAdjacent();
+  }, [date, prefetchAdjacent]);
+
   const handleDateChange = (nextDate: string) => {
-    setDate(nextDate);
-    setSearchParams({ date: nextDate }, { replace: true });
+    startTransition(() => {
+      setDate(nextDate);
+      setSearchParams({ date: nextDate }, { replace: true });
+    });
   };
 
-  const displayDate = new Date(`${date}T00:00:00`);
+  const goToPreviousDay = () => {
+    const current = new Date(date);
+    current.setDate(current.getDate() - 1);
+    handleDateChange(current.toISOString().split('T')[0]);
+  };
+
+  const goToNextDay = () => {
+    const current = new Date(date);
+    current.setDate(current.getDate() + 1);
+    handleDateChange(current.toISOString().split('T')[0]);
+  };
+
+  const toggleFavorite = () => {
+    if (!entry) return;
+    updateEntry({ ...entry, isFavorite: !entry.isFavorite });
+  };
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-30 py-6 border-b border-border/40 transition-all">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-primary">
-            Today's Entry
+    <div className="space-y-3 pb-16">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between py-1">
+        {/* Left: Title + Favorite + Date Text */}
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-serif font-bold tracking-tight text-primary">
+            {isToday ? "Today" : "Entry"}
           </h1>
-          <p className="text-muted-foreground text-sm font-medium">
-            {displayDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
+          {entry && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleFavorite}
+              className={cn(
+                "h-7 w-7 transition-all duration-200",
+                entry.isFavorite
+                  ? "text-yellow-500 hover:text-yellow-600"
+                  : "text-muted-foreground/30 hover:text-yellow-500"
+              )}
+            >
+              <Star className={cn("h-4 w-4 transition-transform", entry.isFavorite && "fill-current scale-110")} />
+            </Button>
+          )}
+          <span className={cn(
+            "text-muted-foreground text-sm font-medium transition-opacity duration-300 hidden sm:inline",
+            (isPending || isFetching) && "opacity-50"
+          )}>
+            {displayDateText}
+          </span>
         </div>
-        
-        <div className="relative mt-4 sm:mt-0 group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <CalendarIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-          <input 
-            type="date" 
-            value={date} 
+
+        {/* Right: Date Navigation */}
+        <div className="flex items-center gap-1">
+          {/* Today button - hidden when already today */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDateChange(getTodayString())}
+            disabled={isPending || isToday}
+            className={cn(
+              "h-7 w-7 transition-all",
+              isToday ? "opacity-0 pointer-events-none" : "opacity-100"
+            )}
+            title="Go to today"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPreviousDay}
+            disabled={isPending}
+            className="h-7 w-7 hover:bg-secondary"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {/* Date picker - no icon inside, wider width */}
+          <input
+            type="date"
+            value={date}
             onChange={(e) => handleDateChange(e.target.value)}
             className={cn(
-              "pl-10 pr-4 py-2 bg-secondary/50 border-0 rounded-lg text-sm font-medium transition-all hover:bg-secondary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer",
-              "appearance-none min-w-[160px]"
+              "px-3 py-1 bg-secondary/50 border-0 rounded-md text-xs font-medium transition-all hover:bg-secondary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer",
+              "w-[130px]"
             )}
           />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextDay}
+            disabled={isPending}
+            className="h-7 w-7 hover:bg-secondary"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-forwards opacity-0" style={{ animationDelay: '100ms' }}>
-          <ThoughtsSection key={date} date={date} />
+
+      {/* Content Grid */}
+      <div className={cn(
+        "grid gap-4 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300",
+        (isPending || isFetching) && "opacity-70"
+      )}>
+        {/* Thoughts - Full width on large screens */}
+        <div className="lg:col-span-2">
+          <ThoughtsSection date={date} />
         </div>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-forwards opacity-0" style={{ animationDelay: '200ms' }}>
-          <DietSection key={date} date={date} />
+
+        {/* Diet */}
+        <div>
+          <DietSection date={date} />
         </div>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-forwards opacity-0" style={{ animationDelay: '300ms' }}>
-          <TodoSection key={`todo-${date}`} date={date} />
+
+        {/* Today's Discoveries */}
+        <div>
+          <DiscoverySection date={date} />
         </div>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 fill-mode-forwards opacity-0" style={{ animationDelay: '400ms' }}>
-          <ExerciseSection key={date} date={date} />
+
+        {/* Tasks */}
+        <div>
+          <TodoSection date={date} />
+        </div>
+
+        {/* Exercise */}
+        <div>
+          <ExerciseSection date={date} />
         </div>
       </div>
     </div>

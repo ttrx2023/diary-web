@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import type { DailyEntry } from "@/types/index";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, ChevronLeft, ChevronRight, BookOpen, Utensils, Activity } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, BookOpen, Utensils, Activity, ListTodo, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
+import { ExportModal } from "@/components/export/ExportModal";
 
 export default function History() {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [entries, setEntries] = useState<Record<string, DailyEntry>>({});
   const [loading, setLoading] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -34,7 +36,8 @@ export default function History() {
             entry.diet.lunch ||
             entry.diet.dinner ||
             entry.diet.snacks ||
-            entry.exercises.length > 0
+            entry.exercises.length > 0 ||
+            entry.todos?.length > 0
           ) {
             entriesMap[entry.date] = entry;
           }
@@ -87,9 +90,18 @@ export default function History() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-serif font-bold tracking-tight text-primary">History</h1>
-        <p className="text-muted-foreground mt-2">Browse your past journal entries.</p>
+      <div className="flex items-center justify-between border-b pb-4">
+        <div>
+          <h1 className="text-3xl font-serif font-bold tracking-tight text-primary">History</h1>
+          <p className="text-muted-foreground mt-2">Browse your past journal entries.</p>
+        </div>
+        <Button
+          onClick={() => setShowExportModal(true)}
+          className="bg-indigo-500 hover:bg-indigo-600 text-white"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export
+        </Button>
       </div>
 
       <Card>
@@ -172,6 +184,9 @@ export default function History() {
                             {entry.exercises.length > 0 && (
                               <div className="h-1 w-full bg-orange-500/60 rounded-full" title="Has exercises" />
                             )}
+                            {entry.todos?.length > 0 && (
+                              <div className="h-1 w-full bg-purple-500/60 rounded-full" title="Has tasks" />
+                            )}
                           </div>
                         )}
                       </div>
@@ -205,6 +220,13 @@ export default function History() {
                     </div>
                     <span className="text-muted-foreground">Exercise</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <ListTodo className="h-3 w-3 text-purple-500" />
+                      <div className="h-1 w-6 bg-purple-500/60 rounded-full" />
+                    </div>
+                    <span className="text-muted-foreground">Tasks</span>
+                  </div>
                 </div>
               </div>
             </>
@@ -216,7 +238,7 @@ export default function History() {
       <Card>
         <CardContent className="p-6">
           <h3 className="font-medium mb-3">This Month</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center p-4 bg-secondary/30 rounded-lg">
               <div className="text-2xl font-bold text-primary">
                 {Object.keys(entries).length}
@@ -243,9 +265,21 @@ export default function History() {
               </div>
               <div className="text-xs text-muted-foreground mt-1">With Exercise</div>
             </div>
+            <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {Object.values(entries).filter((e) => e.todos?.length > 0).length}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">With Tasks</div>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
     </div>
   );
 }

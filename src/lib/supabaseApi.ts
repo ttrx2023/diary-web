@@ -59,6 +59,33 @@ export const supabaseApi: DiaryApi = {
     });
   },
 
+  async getAllEntries(): Promise<DailyEntry[]> {
+    if (!supabase) throw new Error("Supabase not configured");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from('entries')
+      .select('payload,date')
+      .eq('user_id', user.id)
+      .order('date', { ascending: true });
+
+    if (error) {
+      console.error("Error fetching all entries:", error);
+      return [];
+    }
+
+    return (data ?? []).map((row) => {
+      const entryDate = row.date as string;
+      return {
+        ...defaultEntry(entryDate),
+        ...(row.payload ?? {}),
+        date: entryDate,
+      } as DailyEntry;
+    });
+  },
+
   async saveEntry(entry: DailyEntry): Promise<DailyEntry> {
     if (!supabase) throw new Error("Supabase not configured");
 
@@ -90,5 +117,6 @@ function defaultEntry(date: string): DailyEntry {
       thoughts: "",
       diet: { breakfast: "", lunch: "", dinner: "", snacks: "" },
       exercises: [],
+      todos: [],
     };
 }

@@ -21,6 +21,7 @@ function normalizeEntry(entry: Partial<DailyEntry>, date: string): DailyEntry {
       snacks: entry.diet?.snacks || "",
     },
     exercises: Array.isArray(entry.exercises) ? entry.exercises : [],
+    todos: Array.isArray(entry.todos) ? entry.todos : [],
     created_at: entry.created_at || new Date().toISOString(),
   };
 }
@@ -58,6 +59,23 @@ export const mockDiaryApi: DiaryApi = {
       return Object.entries(entries)
         .filter(([date]) => date >= startDate && date <= endDate)
         .map(([date, entry]) => normalizeEntry(entry as Partial<DailyEntry>, date));
+    } catch (e) {
+      console.error("Failed to parse diary entries", e);
+      return [];
+    }
+  },
+
+  async getAllEntries(): Promise<DailyEntry[]> {
+    await delay(300);
+
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const parsed: unknown = data ? JSON.parse(data) : {};
+      const entries: Record<string, unknown> = isRecord(parsed) ? parsed : {};
+
+      return Object.entries(entries)
+        .map(([date, entry]) => normalizeEntry(entry as Partial<DailyEntry>, date))
+        .sort((a, b) => a.date.localeCompare(b.date));
     } catch (e) {
       console.error("Failed to parse diary entries", e);
       return [];

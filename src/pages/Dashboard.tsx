@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ThoughtsSection } from "@/components/diary/ThoughtsSection";
 import { DietSection } from "@/components/diary/DietSection";
 import { ExerciseSection } from "@/components/diary/ExerciseSection";
+import { TodoSection } from "@/components/diary/TodoSection";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,8 +78,11 @@ export default function Dashboard() {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-forwards opacity-0" style={{ animationDelay: '200ms' }}>
           <DietSection key={date} date={date} />
         </div>
-        <div className="md:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-forwards opacity-0" style={{ animationDelay: '300ms' }}>
-            <ExerciseSection key={date} date={date} />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-forwards opacity-0" style={{ animationDelay: '300ms' }}>
+          <TodoSection key={`todo-${date}`} date={date} />
+        </div>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 fill-mode-forwards opacity-0" style={{ animationDelay: '400ms' }}>
+          <ExerciseSection key={date} date={date} />
         </div>
       </div>
     </div>

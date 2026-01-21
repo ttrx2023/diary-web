@@ -155,7 +155,7 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
                       </select>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <Textarea
                           value={item.content}
                           onChange={(e) => {
@@ -166,8 +166,9 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
                           }}
                           onBlur={handleBlur}
                           placeholder="What did you discover?"
-                          className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden break-words"
+                          className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden whitespace-pre-wrap break-words w-full"
                           rows={1}
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                         />
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { TodoItem } from "@/types/index";
-import { Plus, Trash2, CheckSquare, Square, ListTodo, GripVertical } from "lucide-react";
+import { Plus, Trash2, CheckSquare, Square, ListTodo, GripVertical, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -113,6 +113,11 @@ export function TodoSection({ date }: TodoSectionProps) {
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [todos, setTodos] = useState<TodoItem[]>(entry?.todos ?? []);
   const [newTodoText, setNewTodoText] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+
+  // Use ref to always have access to latest todos value (fixes race condition)
+  const todosRef = useRef<TodoItem[]>(todos);
+  const isEditingRef = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -125,14 +130,30 @@ export function TodoSection({ date }: TodoSectionProps) {
     })
   );
 
+  // Sync todos with entry, but only if not currently editing
   useEffect(() => {
-    setTodos(entry?.todos ?? []);
+    if (!isEditingRef.current) {
+      setTodos(entry?.todos ?? []);
+      todosRef.current = entry?.todos ?? [];
+    }
   }, [entry?.todos]);
 
-  const save = (newTodos: TodoItem[]) => {
+  // Keep ref in sync with state
+  useEffect(() => {
+    todosRef.current = todos;
+  }, [todos]);
+
+  const save = useCallback((newTodos: TodoItem[]) => {
     if (!entry) return;
+    setSaveStatus("saving");
     updateEntry({ ...entry, todos: newTodos });
-  };
+
+    // Show saved status briefly
+    setTimeout(() => {
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    }, 300);
+  }, [entry, updateEntry]);
 
   const addTodo = () => {
     if (!newTodoText.trim()) return;
@@ -178,6 +199,7 @@ export function TodoSection({ date }: TodoSectionProps) {
   };
 
   const updateTodoText = (id: string, text: string) => {
+    isEditingRef.current = true;
     const newList = todos.map((t) => {
       if (t.id === id) {
         return { ...t, text };
@@ -188,7 +210,9 @@ export function TodoSection({ date }: TodoSectionProps) {
   };
 
   const handleBlur = () => {
-    save(todos);
+    // Use ref to get the latest todos value
+    isEditingRef.current = false;
+    save(todosRef.current);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -217,9 +241,28 @@ export function TodoSection({ date }: TodoSectionProps) {
           <CardTitle className="text-base font-serif font-bold">Tasks</CardTitle>
         </div>
         <div className="flex items-center gap-2">
+          {/* Save Status Indicator */}
+          <div className={cn(
+            "flex items-center gap-1 text-[10px] font-medium transition-all duration-300",
+            saveStatus === "idle" && "opacity-0",
+            saveStatus === "saving" && "text-muted-foreground opacity-100",
+            saveStatus === "saved" && "text-green-600 opacity-100"
+          )}>
+            {saveStatus === "saving" && (
+              <div className="h-2 w-2 rounded-full bg-muted-foreground animate-pulse" />
+            )}
+            {saveStatus === "saved" && (
+              <Check className="h-3 w-3" />
+            )}
+            <span>{saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : ""}</span>
+          </div>
+
           {/* Mini Progress Bar with x/y inside */}
           {totalCount > 0 && (
-            <div className="relative w-16 h-5 bg-secondary rounded-full overflow-hidden">
+            <div className={cn(
+              "relative w-16 h-5 bg-secondary rounded-full overflow-hidden transition-all duration-300",
+              saveStatus === "saving" && "animate-pulse"
+            )}>
               <div
                 className="h-full bg-purple-500 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${progressPercent}%` }}

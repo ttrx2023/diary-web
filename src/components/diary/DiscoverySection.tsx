@@ -3,6 +3,7 @@ import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { DiscoveryItem, DiscoveryCategory } from "@/types/index";
 import { Plus, Trash2, Lightbulb, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -155,12 +156,18 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <Input
+                        <Textarea
                           value={item.content}
-                          onChange={(e) => updateDiscoveryContent(item.id, e.target.value)}
+                          onChange={(e) => {
+                            updateDiscoveryContent(item.id, e.target.value);
+                            // Auto-resize textarea
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }}
                           onBlur={handleBlur}
                           placeholder="What did you discover?"
-                          className="border-0 bg-transparent shadow-none px-0 h-auto py-0.5 text-sm focus-visible:ring-0"
+                          className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden break-words"
+                          rows={1}
                         />
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

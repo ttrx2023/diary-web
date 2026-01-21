@@ -5,6 +5,7 @@ import { DietSection } from "@/components/diary/DietSection";
 import { ExerciseSection } from "@/components/diary/ExerciseSection";
 import { TodoSection } from "@/components/diary/TodoSection";
 import { DiscoverySection } from "@/components/diary/DiscoverySection";
+import { MobileSectionTabs, type SectionType } from "@/components/diary/MobileSectionTabs";
 import { useDiaryEntry, usePrefetchDates } from "@/hooks/useDiary";
 import { Star, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const dateParam = isValidDateParam(rawDateParam) ? rawDateParam : null;
   const [date, setDate] = useState(() => dateParam ?? getTodayString());
   const [isPending, startTransition] = useTransition();
+  const [activeSection, setActiveSection] = useState<SectionType>("thoughts");
 
   const { entry, updateEntry, isFetching } = useDiaryEntry(date);
   const { prefetchAdjacent } = usePrefetchDates(date);
@@ -86,12 +88,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-3 pb-16">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between py-1">
+    <div className="space-y-3 pb-4">
+      {/* Mobile Tab Navigation - Only visible on mobile */}
+      <div className="md:hidden -mx-4 -mt-4">
+        <MobileSectionTabs
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          date={date}
+          onDateChange={handleDateChange}
+        />
+      </div>
+
+      {/* Desktop Header - Hidden on mobile */}
+      <div className="hidden md:flex items-center justify-between py-1">
         {/* Left: Title + Favorite + Date Text */}
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-serif font-bold tracking-tight text-primary">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-primary shrink-0">
             {isToday ? "Today" : "Entry"}
           </h1>
           {entry && (
@@ -100,7 +112,7 @@ export default function Dashboard() {
               size="icon"
               onClick={toggleFavorite}
               className={cn(
-                "h-7 w-7 transition-all duration-200",
+                "h-7 w-7 shrink-0 transition-all duration-200",
                 entry.isFavorite
                   ? "text-yellow-500 hover:text-yellow-600"
                   : "text-muted-foreground/30 hover:text-yellow-500"
@@ -110,7 +122,7 @@ export default function Dashboard() {
             </Button>
           )}
           <span className={cn(
-            "text-muted-foreground text-sm font-medium transition-opacity duration-300 hidden sm:inline",
+            "text-muted-foreground text-sm font-medium transition-opacity duration-300 hidden sm:inline truncate",
             (isPending || isFetching) && "opacity-50"
           )}>
             {displayDateText}
@@ -118,7 +130,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right: Date Navigation */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* Today button - hidden when already today */}
           <Button
             variant="ghost"
@@ -126,8 +138,8 @@ export default function Dashboard() {
             onClick={() => handleDateChange(getTodayString())}
             disabled={isPending || isToday}
             className={cn(
-              "h-7 w-7 transition-all",
-              isToday ? "opacity-0 pointer-events-none" : "opacity-100"
+              "h-8 w-8 sm:h-7 sm:w-7 transition-all",
+              isToday ? "opacity-0 pointer-events-none w-0 sm:w-7" : "opacity-100"
             )}
             title="Go to today"
           >
@@ -139,19 +151,19 @@ export default function Dashboard() {
             size="icon"
             onClick={goToPreviousDay}
             disabled={isPending}
-            className="h-7 w-7 hover:bg-secondary"
+            className="h-8 w-8 sm:h-7 sm:w-7 hover:bg-secondary"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          {/* Date picker - no icon inside, wider width */}
+          {/* Date picker - responsive width */}
           <input
             type="date"
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
             className={cn(
-              "px-3 py-1 bg-secondary/50 border-0 rounded-md text-xs font-medium transition-all hover:bg-secondary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer",
-              "w-[130px]"
+              "px-2 sm:px-3 py-1.5 sm:py-1 bg-secondary/50 border-0 rounded-md text-xs font-medium transition-all hover:bg-secondary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer",
+              "w-[115px] sm:w-[130px]"
             )}
           />
 
@@ -160,16 +172,28 @@ export default function Dashboard() {
             size="icon"
             onClick={goToNextDay}
             disabled={isPending}
-            className="h-7 w-7 hover:bg-secondary"
+            className="h-8 w-8 sm:h-7 sm:w-7 hover:bg-secondary"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Content Grid */}
+      {/* Mobile: Single Section View */}
       <div className={cn(
-        "grid gap-4 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300",
+        "md:hidden transition-opacity duration-300",
+        (isPending || isFetching) && "opacity-70"
+      )}>
+        {activeSection === "thoughts" && <ThoughtsSection date={date} />}
+        {activeSection === "diet" && <DietSection date={date} />}
+        {activeSection === "discovery" && <DiscoverySection date={date} />}
+        {activeSection === "todo" && <TodoSection date={date} />}
+        {activeSection === "exercise" && <ExerciseSection date={date} />}
+      </div>
+
+      {/* Desktop: Grid View - Hidden on mobile */}
+      <div className={cn(
+        "hidden md:grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300",
         (isPending || isFetching) && "opacity-70"
       )}>
         {/* Thoughts - Full width on large screens */}

@@ -99,40 +99,40 @@ export default function History() {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between py-2">
+      <div className="flex items-center justify-between py-1 sm:py-2">
         <div>
-          <h1 className="text-2xl font-serif font-bold tracking-tight text-primary">History</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Browse your journal entries</p>
+          <h1 className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-primary">History</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">Browse your journal entries</p>
         </div>
         <Button
           onClick={() => setShowExportModal(true)}
           size="sm"
-          className="bg-indigo-500 hover:bg-indigo-600 text-white h-9"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white h-8 sm:h-9 text-xs sm:text-sm"
         >
-          <Download className="mr-1.5 h-3.5 w-3.5" />
+          <Download className="mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5" />
           Export
         </Button>
       </div>
 
-      {/* Main Content - Calendar + Stats Side by Side */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      {/* Main Content - Calendar + Stats */}
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
         {/* Calendar */}
         <Card className="lg:col-span-2">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             {/* Month Navigation */}
-            <div className="flex items-center justify-between mb-4">
-              <Button variant="ghost" size="icon" onClick={previousMonth} className="h-8 w-8">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <Button variant="ghost" size="icon" onClick={previousMonth} className="h-9 w-9 sm:h-8 sm:w-8">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <h2 className="text-lg font-serif font-bold">
+                <h2 className="text-base sm:text-lg font-serif font-bold">
                   {format(currentMonth, "MMMM yyyy")}
                 </h2>
               </div>
-              <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={nextMonth} className="h-9 w-9 sm:h-8 sm:w-8">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -175,7 +175,7 @@ export default function History() {
                         key={dateStr}
                         onClick={() => goToDate(day)}
                         className={cn(
-                          "relative h-10 rounded-md transition-all hover:bg-secondary/80 group",
+                          "relative h-11 sm:h-10 rounded-md transition-all hover:bg-secondary/80 group active:scale-95",
                           isCurrentMonth ? "opacity-100" : "opacity-40 text-muted-foreground",
                           isTodayDate && "ring-2 ring-primary ring-offset-1",
                           hasEntry && isCurrentMonth && "bg-secondary/50",
@@ -241,9 +241,9 @@ export default function History() {
 
         {/* Stats Panel */}
         <Card>
-          <CardContent className="p-4">
-            <h3 className="font-serif font-bold text-sm mb-3">This Month</h3>
-            <div className="space-y-2">
+          <CardContent className="p-3 sm:p-4">
+            <h3 className="font-serif font-bold text-sm mb-2 sm:mb-3">This Month</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:space-y-2 sm:gap-0">
               <div className="flex items-center justify-between p-2.5 bg-secondary/30 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5 text-primary" />

@@ -49,18 +49,31 @@ export function DietSection({ date }: DietSectionProps) {
   const isInteractive = !isLoading && !!entry;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b bg-secondary/20 relative">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-background rounded-lg shadow-sm border">
-            <Utensils className="h-5 w-5 text-primary" />
+    <Card className="overflow-hidden border-0 md:border shadow-none md:shadow-sm">
+      {/* Header - Hidden on mobile */}
+      <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 md:pb-6 px-4 md:px-6 border-b bg-secondary/20 relative">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-1.5 md:p-2 bg-background rounded-md md:rounded-lg shadow-sm border">
+            <Utensils className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
-          <CardTitle className="text-xl font-serif font-bold">Diet Log</CardTitle>
+          <CardTitle className="text-base md:text-xl font-serif font-bold">Diet</CardTitle>
         </div>
         {/* Save Progress Bar */}
         <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
-      <CardContent className="p-6 space-y-6">
+
+      {/* Mobile: Minimal save indicator + Title */}
+      <div className="md:hidden relative">
+        <SaveProgressBar status={saveStatus} className="absolute top-0 left-0 right-0" />
+        <div className="flex items-center justify-between px-1 pt-1 pb-2">
+          <div className="flex items-center gap-2">
+            <Utensils className="h-4 w-4 text-green-500" />
+            <span className="text-sm font-semibold">Meals</span>
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="grid gap-4">
           <div className="group space-y-2">
             <Label htmlFor="breakfast" className="flex items-center gap-2 text-muted-foreground group-focus-within:text-primary transition-colors">

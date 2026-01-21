@@ -141,147 +141,204 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-background rounded-md shadow-sm border">
-            <Lightbulb className="h-4 w-4 text-yellow-500" />
-          </div>
-          <CardTitle className="text-base font-serif font-bold">Discoveries</CardTitle>
-        </div>
-        <div className="flex items-center gap-2">
-          {discoveries.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-500/10 text-yellow-600">
-              <Sparkles className="h-3 w-3" />
-              {discoveries.length}
-            </span>
-          )}
-        </div>
-        {/* Save Progress Bar */}
-        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
-      </CardHeader>
-      <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-        {isLoading && (
-          <div className="p-6 text-center text-sm text-muted-foreground animate-pulse">
-            Loading discoveries...
-          </div>
-        )}
-
-        {!isLoading && discoveries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 bg-secondary/5 flex-1">
-            <div className="p-2 bg-yellow-500/10 rounded-full">
-              <Lightbulb className="h-5 w-5 text-yellow-500/50" />
+    <>
+      {/* Main Content */}
+      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm">
+        {/* Header - Hidden on mobile */}
+        <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-background rounded-md shadow-sm border">
+              <Lightbulb className="h-4 w-4 text-yellow-500" />
             </div>
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">No discoveries yet</p>
-              <p className="text-xs text-muted-foreground">Capture your ideas & insights</p>
-            </div>
+            <CardTitle className="text-base font-serif font-bold">Discoveries</CardTitle>
           </div>
-        )}
-
-        {/* Scrollable Discovery List */}
-        {!isLoading && discoveries.length > 0 && (
-          <div className="relative flex-1 min-h-0">
-            <div className="max-h-[280px] overflow-y-auto scrollbar-thin p-3 space-y-2">
-              {discoveries.map((item, index) => {
-                const config = categoryConfig[item.category];
-
-                return (
-                  <div
-                    key={item.id}
-                    className="group bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <div className="flex items-start gap-2 p-3">
-                      {/* Category Badge */}
-                      <select
-                        value={item.category}
-                        onChange={(e) => updateDiscoveryCategory(item.id, e.target.value as DiscoveryCategory)}
-                        className={cn(
-                          "w-9 h-9 rounded-md border text-base cursor-pointer appearance-none text-center flex-shrink-0",
-                          config.color
-                        )}
-                        title="Change category"
-                      >
-                        <option value="idea">💡</option>
-                        <option value="learning">📚</option>
-                        <option value="inspiration">✨</option>
-                        <option value="other">⚡</option>
-                      </select>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <AutoResizeTextarea
-                          value={item.content}
-                          onChange={(value) => updateDiscoveryContent(item.id, value)}
-                          onBlur={handleBlur}
-                          placeholder="What did you discover?"
-                          className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden whitespace-pre-wrap break-words w-full"
-                        />
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {" · "}
-                          {config.label}
-                        </p>
-                      </div>
-
-                      {/* Delete Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeDiscovery(item.id)}
-                        className="h-7 w-7 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Fade overlay */}
-            {discoveries.length > 4 && (
-              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="flex items-center gap-2">
+            {discoveries.length > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-500/10 text-yellow-600">
+                <Sparkles className="h-3 w-3" />
+                {discoveries.length}
+              </span>
             )}
           </div>
-        )}
+          {/* Save Progress Bar */}
+          <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
+        </CardHeader>
 
-        {/* Add New Discovery */}
-        <div className="p-3 border-t bg-secondary/10 flex-shrink-0">
-          <div className="flex gap-2">
-            <select
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as DiscoveryCategory)}
-              className={cn(
-                "w-10 h-9 rounded-md border text-base cursor-pointer appearance-none text-center flex-shrink-0",
-                categoryConfig[newCategory].color
-              )}
-            >
-              <option value="idea">💡</option>
-              <option value="learning">📚</option>
-              <option value="inspiration">✨</option>
-              <option value="other">⚡</option>
-            </select>
-
-            <Input
-              placeholder="What did you discover?"
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading || !entry}
-              className="flex-1 bg-background h-9 text-sm"
-            />
-            <Button
-              onClick={addDiscovery}
-              disabled={isLoading || !entry || !newContent.trim()}
-              size="sm"
-              className="bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-3"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+        {/* Mobile: Minimal save indicator + Title */}
+        <div className="md:hidden relative">
+          <SaveProgressBar status={saveStatus} className="absolute top-0 left-0 right-0" />
+          <div className="flex items-center justify-between px-1 pt-1 pb-2">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-semibold">Discoveries</span>
+            </div>
+            {discoveries.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {discoveries.length} items
+              </span>
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+          {isLoading && (
+            <div className="p-6 text-center text-sm text-muted-foreground animate-pulse">
+              Loading discoveries...
+            </div>
+          )}
+
+          {!isLoading && discoveries.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-8 md:py-6 text-center space-y-2 flex-1">
+              <div className="p-2 bg-yellow-500/10 rounded-full">
+                <Lightbulb className="h-5 w-5 text-yellow-500/50" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-foreground">No discoveries yet</p>
+                <p className="text-xs text-muted-foreground">Capture your ideas & insights</p>
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable Discovery List */}
+          {!isLoading && discoveries.length > 0 && (
+            <div className="relative flex-1 min-h-0">
+              <div className="md:max-h-[280px] overflow-y-auto scrollbar-thin p-3 pb-16 md:pb-3 space-y-2">
+                {discoveries.map((item, index) => {
+                  const config = categoryConfig[item.category];
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="group bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="flex items-start gap-2 p-3">
+                        {/* Category Badge */}
+                        <select
+                          value={item.category}
+                          onChange={(e) => updateDiscoveryCategory(item.id, e.target.value as DiscoveryCategory)}
+                          className={cn(
+                            "w-9 h-9 rounded-md border text-base cursor-pointer appearance-none text-center flex-shrink-0",
+                            config.color
+                          )}
+                          title="Change category"
+                        >
+                          <option value="idea">💡</option>
+                          <option value="learning">📚</option>
+                          <option value="inspiration">✨</option>
+                          <option value="other">⚡</option>
+                        </select>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <AutoResizeTextarea
+                            value={item.content}
+                            onChange={(value) => updateDiscoveryContent(item.id, value)}
+                            onBlur={handleBlur}
+                            placeholder="What did you discover?"
+                            className="border-0 bg-transparent shadow-none px-0 py-0.5 text-sm focus-visible:ring-0 resize-none min-h-[24px] overflow-hidden whitespace-pre-wrap break-words w-full"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {" · "}
+                            {config.label}
+                          </p>
+                        </div>
+
+                        {/* Delete Button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeDiscovery(item.id)}
+                          className="h-7 w-7 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Fade overlay - Desktop only */}
+              {discoveries.length > 4 && (
+                <div className="hidden md:block absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+              )}
+            </div>
+          )}
+
+          {/* Add New Discovery - Desktop only */}
+          <div className="hidden md:block p-3 border-t bg-secondary/10 flex-shrink-0">
+            <div className="flex gap-2">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as DiscoveryCategory)}
+                className={cn(
+                  "w-10 h-9 rounded-md border text-base cursor-pointer appearance-none text-center flex-shrink-0",
+                  categoryConfig[newCategory].color
+                )}
+              >
+                <option value="idea">💡</option>
+                <option value="learning">📚</option>
+                <option value="inspiration">✨</option>
+                <option value="other">⚡</option>
+              </select>
+
+              <Input
+                placeholder="What did you discover?"
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading || !entry}
+                className="flex-1 bg-background h-9 text-sm"
+              />
+              <Button
+                onClick={addDiscovery}
+                disabled={isLoading || !entry || !newContent.trim()}
+                size="sm"
+                className="bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-3"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mobile: Floating Add Bar */}
+      <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 px-3 pb-2">
+        <div className="flex gap-2 p-2 bg-card/95 backdrop-blur-md rounded-xl border shadow-lg">
+          <select
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value as DiscoveryCategory)}
+            className={cn(
+              "w-10 h-9 rounded-md border text-base cursor-pointer appearance-none text-center flex-shrink-0",
+              categoryConfig[newCategory].color
+            )}
+          >
+            <option value="idea">💡</option>
+            <option value="learning">📚</option>
+            <option value="inspiration">✨</option>
+            <option value="other">⚡</option>
+          </select>
+
+          <Input
+            placeholder="What did you discover?"
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading || !entry}
+            className="flex-1 bg-background h-9 text-sm"
+          />
+          <Button
+            onClick={addDiscovery}
+            disabled={isLoading || !entry || !newContent.trim()}
+            size="sm"
+            className="bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-3"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }

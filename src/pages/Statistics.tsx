@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "@/lib/api";
-import type { DailyEntry } from "@/types/index";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionTimeline, type SectionType } from "@/components/diary/SectionTimeline";
+import { usePreferences } from "@/hooks/usePreferences";
+import { useAllEntries } from "@/hooks/useAllEntries";
 import {
   BarChart3,
   Calendar,
@@ -17,120 +19,59 @@ import {
   Flame,
   ChevronRight
 } from "lucide-react";
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday } from "date-fns";
+import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 
-interface Stats {
-  totalEntries: number;
-  totalDays: number;
-  entriesWithThoughts: number;
-  entriesWithDiet: number;
-  entriesWithExercise: number;
-  entriesWithTodos: number;
-  entriesWithDiscoveries: number;
-  favoriteEntries: number;
-  totalTodos: number;
-  completedTodos: number;
-  totalExercises: number;
-  totalDiscoveries: number;
-  currentStreak: number;
-  longestStreak: number;
-  weeklyActivity: { date: string; hasEntry: boolean }[];
+// Skeleton component for loading state
+function StatsSkeleton() {
+  return (
+    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300">
+      {/* Header skeleton */}
+      <div className="border-b pb-2 md:pb-4">
+        <div className="h-7 md:h-9 bg-secondary rounded-md w-24 animate-pulse" />
+        <div className="hidden md:block h-4 bg-secondary rounded w-64 mt-2 animate-pulse" />
+      </div>
+
+      {/* Streak cards skeleton */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-24 md:h-32 bg-secondary/50 rounded-xl animate-pulse" />
+        ))}
+      </div>
+
+      {/* Content cards skeleton */}
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="h-20 md:h-28 bg-secondary/50 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function Statistics() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [allEntries, setAllEntries] = useState<DailyEntry[]>([]);
+  const [searchParams] = useSearchParams();
   const [selectedSection, setSelectedSection] = useState<SectionType | null>(null);
+  const { preferences } = usePreferences();
 
+  // Use React Query for cached data loading
+  const { entries, stats, isLoading } = useAllEntries();
+
+  // Handle URL parameter for direct section access - only run once on mount
   useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      try {
-        const allEntries = await api.getAllEntries();
-
-        // Filter non-empty entries
-        const nonEmpty = allEntries.filter(e =>
-          e.thoughts ||
-          e.diet.breakfast || e.diet.lunch || e.diet.dinner || e.diet.snacks ||
-          e.exercises.length > 0 ||
-          (e.todos?.length ?? 0) > 0 ||
-          (e.discoveries?.length ?? 0) > 0
-        );
-
-        // Calculate streaks
-        const sortedDates = nonEmpty.map(e => e.date).sort().reverse();
-        let currentStreak = 0;
-        let longestStreak = 0;
-        let tempStreak = 0;
-
-        const dateSet = new Set(sortedDates);
-
-        // Current streak
-        let checkDate = new Date();
-        while (dateSet.has(format(checkDate, "yyyy-MM-dd"))) {
-          currentStreak++;
-          checkDate = subDays(checkDate, 1);
-        }
-
-        // Longest streak
-        for (let i = 0; i < sortedDates.length; i++) {
-          const current = new Date(sortedDates[i]);
-          const next = i < sortedDates.length - 1 ? new Date(sortedDates[i + 1]) : null;
-
-          tempStreak++;
-
-          if (!next || (current.getTime() - next.getTime()) > 86400000 * 1.5) {
-            longestStreak = Math.max(longestStreak, tempStreak);
-            tempStreak = 0;
-          }
-        }
-
-        // Weekly activity
-        const weekStart = startOfWeek(new Date());
-        const weekEnd = endOfWeek(new Date());
-        const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
-        const weeklyActivity = weekDays.map(day => ({
-          date: format(day, "yyyy-MM-dd"),
-          hasEntry: dateSet.has(format(day, "yyyy-MM-dd"))
-        }));
-
-        // Calculate stats
-        const calculatedStats: Stats = {
-          totalEntries: nonEmpty.length,
-          totalDays: new Set(nonEmpty.map(e => e.date)).size,
-          entriesWithThoughts: nonEmpty.filter(e => e.thoughts).length,
-          entriesWithDiet: nonEmpty.filter(e => e.diet.breakfast || e.diet.lunch || e.diet.dinner || e.diet.snacks).length,
-          entriesWithExercise: nonEmpty.filter(e => e.exercises.length > 0).length,
-          entriesWithTodos: nonEmpty.filter(e => (e.todos?.length ?? 0) > 0).length,
-          entriesWithDiscoveries: nonEmpty.filter(e => (e.discoveries?.length ?? 0) > 0).length,
-          favoriteEntries: nonEmpty.filter(e => e.isFavorite).length,
-          totalTodos: nonEmpty.reduce((acc, e) => acc + (e.todos?.length ?? 0), 0),
-          completedTodos: nonEmpty.reduce((acc, e) => acc + (e.todos?.filter(t => t.completed).length ?? 0), 0),
-          totalExercises: nonEmpty.reduce((acc, e) => acc + e.exercises.length, 0),
-          totalDiscoveries: nonEmpty.reduce((acc, e) => acc + (e.discoveries?.length ?? 0), 0),
-          currentStreak,
-          longestStreak: Math.max(longestStreak, currentStreak),
-          weeklyActivity,
-        };
-
-        setStats(calculatedStats);
-        setAllEntries(nonEmpty);
-      } catch (error) {
-        console.error("Failed to load stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, []);
+    const sectionParam = searchParams.get("section");
+    if (sectionParam && ["thoughts", "diet", "exercise", "todo", "discovery"].includes(sectionParam)) {
+      setSelectedSection(sectionParam as SectionType);
+      // Clear the URL parameter after setting section
+      window.history.replaceState({}, "", "/statistics");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   // Handle toggling todo completion from the timeline view
   const handleToggleTodo = useCallback(async (date: string, todoId: string) => {
     // Find the entry
-    const entry = allEntries.find(e => e.date === date);
+    const entry = entries.find(e => e.date === date);
     if (!entry || !entry.todos) return;
 
     // Toggle the todo
@@ -145,40 +86,18 @@ export default function Statistics() {
       return t;
     });
 
-    // Optimistic update - update local state immediately
-    const updatedEntry = { ...entry, todos: updatedTodos };
-    setAllEntries(prev => prev.map(e => e.date === date ? updatedEntry : e));
-
-    // Update stats
-    if (stats) {
-      const prevCompleted = entry.todos.find(t => t.id === todoId)?.completed;
-      const newCompletedTodos = prevCompleted
-        ? stats.completedTodos - 1
-        : stats.completedTodos + 1;
-      setStats({ ...stats, completedTodos: newCompletedTodos });
-    }
-
     // Persist to backend
+    const updatedEntry = { ...entry, todos: updatedTodos };
     try {
       await api.saveEntry(updatedEntry);
     } catch (error) {
       console.error("Failed to update todo:", error);
-      // Rollback on error
-      setAllEntries(prev => prev.map(e => e.date === date ? entry : e));
     }
-  }, [allEntries, stats]);
+  }, [entries]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-secondary rounded w-48" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-secondary rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
+  // Show skeleton while loading
+  if (isLoading && !stats) {
+    return <StatsSkeleton />;
   }
 
   if (!stats) {
@@ -198,7 +117,7 @@ export default function Statistics() {
     return (
       <SectionTimeline
         section={selectedSection}
-        entries={allEntries}
+        entries={entries}
         onBack={() => setSelectedSection(null)}
         onToggleTodo={handleToggleTodo}
       />
@@ -206,81 +125,92 @@ export default function Statistics() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-serif font-bold tracking-tight text-primary">Statistics</h1>
-        <p className="text-muted-foreground mt-2">Your journaling insights and progress.</p>
+    <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header - Compact on mobile */}
+      <div className="border-b pb-2 md:pb-4">
+        <h1 className="text-xl md:text-3xl font-serif font-bold tracking-tight text-primary">Stats</h1>
+        <p className="text-muted-foreground text-xs md:text-base mt-0.5 md:mt-2 hidden md:block">Your journaling insights and progress.</p>
       </div>
 
-      {/* Streak Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Streak Cards - Hidden on mobile by default, controlled by preferences */}
+      <div className={cn(
+        "grid gap-4 md:grid-cols-2 lg:grid-cols-4",
+        !preferences.showStreak && "hidden md:grid"
+      )}>
         <Card className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-500/20">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                <p className="text-3xl font-bold text-orange-600">{stats.currentStreak}</p>
-                <p className="text-xs text-muted-foreground mt-1">days</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Current Streak</p>
+                <p className="text-2xl md:text-3xl font-bold text-orange-600">{stats.currentStreak}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">days</p>
               </div>
-              <div className="p-3 bg-orange-500/20 rounded-full">
-                <Flame className="h-6 w-6 text-orange-500" />
+              <div className="p-2 md:p-3 bg-orange-500/20 rounded-full">
+                <Flame className="h-5 w-5 md:h-6 md:w-6 text-orange-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Longest Streak</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.longestStreak}</p>
-                <p className="text-xs text-muted-foreground mt-1">days</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Longest Streak</p>
+                <p className="text-2xl md:text-3xl font-bold text-purple-600">{stats.longestStreak}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">days</p>
               </div>
-              <div className="p-3 bg-purple-500/20 rounded-full">
-                <TrendingUp className="h-6 w-6 text-purple-500" />
+              <div className="p-2 md:p-3 bg-purple-500/20 rounded-full">
+                <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-purple-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-          <CardContent className="p-6">
+        <Card className={cn(
+          "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20",
+          !preferences.showTodoProgress && "hidden md:block"
+        )}>
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Task Completion</p>
-                <p className="text-3xl font-bold text-green-600">{completionRate}%</p>
-                <p className="text-xs text-muted-foreground mt-1">{stats.completedTodos}/{stats.totalTodos} done</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Task Completion</p>
+                <p className="text-2xl md:text-3xl font-bold text-green-600">{completionRate}%</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">{stats.completedTodos}/{stats.totalTodos} done</p>
               </div>
-              <div className="p-3 bg-green-500/20 rounded-full">
-                <Target className="h-6 w-6 text-green-500" />
+              <div className="p-2 md:p-3 bg-green-500/20 rounded-full">
+                <Target className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20">
-          <CardContent className="p-6">
+        <Card className={cn(
+          "bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-yellow-500/20",
+          !preferences.showFavorites && "hidden md:block"
+        )}>
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Favorites</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.favoriteEntries}</p>
-                <p className="text-xs text-muted-foreground mt-1">starred entries</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Favorites</p>
+                <p className="text-2xl md:text-3xl font-bold text-yellow-600">{stats.favoriteEntries}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">starred entries</p>
               </div>
-              <div className="p-3 bg-yellow-500/20 rounded-full">
-                <Star className="h-6 w-6 text-yellow-500" />
+              <div className="p-2 md:p-3 bg-yellow-500/20 rounded-full">
+                <Star className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Weekly Activity */}
-      <Card>
+      {/* Weekly Activity - Hidden on mobile by default */}
+      <Card className={cn(
+        !preferences.showWeeklyActivity && "hidden md:block"
+      )}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Calendar className="h-4 w-4 md:h-5 md:w-5" />
             This Week's Activity
           </CardTitle>
         </CardHeader>
@@ -314,7 +244,7 @@ export default function Statistics() {
       </Card>
 
       {/* Content Statistics - Clickable Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
         {/* Thoughts Card */}
         <Card
           className={cn(
@@ -323,18 +253,18 @@ export default function Statistics() {
           )}
           onClick={() => stats.entriesWithThoughts > 0 && setSelectedSection("thoughts")}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-blue-500" />
-                Thoughts
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center justify-between">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <BookOpen className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-500" />
+                <span className="hidden md:inline">Thoughts</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-blue-500 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover:text-blue-500 transition-colors" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.entriesWithThoughts}</p>
-            <p className="text-xs text-muted-foreground">entries with reflections</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{stats.entriesWithThoughts}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">entries</p>
           </CardContent>
         </Card>
 
@@ -346,22 +276,22 @@ export default function Statistics() {
           )}
           onClick={() => stats.entriesWithDiet > 0 && setSelectedSection("diet")}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Utensils className="h-4 w-4 text-green-500" />
-                Diet Logs
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center justify-between">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Utensils className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500" />
+                <span className="hidden md:inline">Diet Logs</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-green-500 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover:text-green-500 transition-colors" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.entriesWithDiet}</p>
-            <p className="text-xs text-muted-foreground">days tracking meals</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{stats.entriesWithDiet}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">days</p>
           </CardContent>
         </Card>
 
-        {/* Exercise Card */}
+        {/* Exercise Card - Enhanced with streak info */}
         <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md hover:border-orange-500/30 group hover-card",
@@ -369,18 +299,18 @@ export default function Statistics() {
           )}
           onClick={() => stats.entriesWithExercise > 0 && setSelectedSection("exercise")}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-orange-500" />
-                Exercises
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center justify-between">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-500" />
+                <span className="hidden md:inline">Exercises</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-orange-500 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover:text-orange-500 transition-colors" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalExercises}</p>
-            <p className="text-xs text-muted-foreground">workouts logged</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{stats.totalExercises}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">workouts</p>
           </CardContent>
         </Card>
 
@@ -392,18 +322,18 @@ export default function Statistics() {
           )}
           onClick={() => stats.entriesWithTodos > 0 && setSelectedSection("todo")}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckSquare className="h-4 w-4 text-purple-500" />
-                Tasks
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center justify-between">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <CheckSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-purple-500" />
+                <span className="hidden md:inline">Tasks</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-purple-500 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover:text-purple-500 transition-colors" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.completedTodos}</p>
-            <p className="text-xs text-muted-foreground">{stats.completedTodos}/{stats.totalTodos} completed</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{completionRate}%</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">{stats.completedTodos}/{stats.totalTodos}</p>
           </CardContent>
         </Card>
 
@@ -415,35 +345,40 @@ export default function Statistics() {
           )}
           onClick={() => stats.entriesWithDiscoveries > 0 && setSelectedSection("discovery")}
         >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-yellow-500" />
-                Discoveries
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center justify-between">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Lightbulb className="h-3.5 w-3.5 md:h-4 md:w-4 text-yellow-500" />
+                <span className="hidden md:inline">Discoveries</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-yellow-500 transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover:text-yellow-500 transition-colors" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalDiscoveries}</p>
-            <p className="text-xs text-muted-foreground">insights captured</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{stats.totalDiscoveries}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">insights</p>
           </CardContent>
         </Card>
 
         {/* Total Entries Card */}
         <Card className="hover-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-indigo-500" />
-              Total Entries
+          <CardHeader className="pb-1 md:pb-2 p-3 md:p-6">
+            <CardTitle className="text-sm md:text-base flex items-center gap-1.5 md:gap-2">
+              <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-500" />
+              <span className="hidden md:inline">Total Entries</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stats.totalEntries}</p>
-            <p className="text-xs text-muted-foreground">journal entries</p>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <p className="text-xl md:text-2xl font-bold">{stats.totalEntries}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">entries</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Mobile hint for settings */}
+      <p className="text-center text-xs text-muted-foreground md:hidden py-2">
+        更多统计选项可在设置中开启
+      </p>
     </div>
   );
 }

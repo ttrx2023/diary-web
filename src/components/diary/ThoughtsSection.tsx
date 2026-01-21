@@ -36,27 +36,34 @@ export function ThoughtsSection({ date }: ThoughtsSectionProps) {
   const isInteractive = !isLoading && !!entry;
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b bg-secondary/20 relative">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-background rounded-lg shadow-sm border">
-            <PenLine className="h-5 w-5 text-primary" />
+    <Card className="h-full flex flex-col overflow-hidden border-0 md:border shadow-none md:shadow-sm">
+      {/* Header - Hidden on mobile for full-screen experience */}
+      <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 md:pb-4 px-4 md:px-6 border-b bg-secondary/20 relative">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-1.5 md:p-2 bg-background rounded-md md:rounded-lg shadow-sm border">
+            <PenLine className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
-          <CardTitle className="text-xl font-serif font-bold">Thoughts & Reflection</CardTitle>
+          <CardTitle className="text-base md:text-xl font-serif font-bold">Thoughts</CardTitle>
         </div>
         {/* Save Progress Bar */}
         <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
+
+      {/* Mobile: Minimal save indicator */}
+      <div className="md:hidden relative">
+        <SaveProgressBar status={saveStatus} className="absolute top-0 left-0 right-0" />
+      </div>
+
       <CardContent className="flex-1 p-0">
         <div className="relative h-full">
-            <Textarea
+          <Textarea
             placeholder="How was your day? What's on your mind?"
-            className="min-h-[250px] h-full resize-none border-0 focus-visible:ring-0 rounded-none p-6 text-base leading-relaxed bg-transparent"
+            className="min-h-[calc(100vh-180px)] md:min-h-[250px] h-full resize-none border-0 focus-visible:ring-0 rounded-none p-4 md:p-6 text-base leading-relaxed bg-transparent"
             value={localThoughts}
             onChange={(e) => setLocalThoughts(e.target.value)}
             onBlur={handleBlur}
             disabled={!isInteractive}
-            />
+          />
         </div>
       </CardContent>
     </Card>

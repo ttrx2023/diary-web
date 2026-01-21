@@ -2,11 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { Database, Cloud, HardDrive, ShieldCheck, LogOut, User } from "lucide-react";
+import { usePreferences } from "@/hooks/usePreferences";
+import { Database, Cloud, HardDrive, ShieldCheck, LogOut, User, BarChart3, Eye, EyeOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const isSyncEnabled = !!supabase;
   const { user, signOut } = useAuth();
+  const { preferences, updatePreference } = usePreferences();
 
   const handleSignOut = async () => {
     if (confirm("Are you sure you want to sign out?")) {
@@ -14,14 +17,22 @@ export default function Settings() {
     }
   };
 
+  const preferenceItems = [
+    { key: "showSectionOverview" as const, label: "板块速览", description: "显示各板块统计卡片" },
+    { key: "showTodoProgress" as const, label: "Todo 完成率", description: "显示任务完成进度" },
+    { key: "showStreak" as const, label: "连续打卡", description: "显示 Streak 统计卡片" },
+    { key: "showFavorites" as const, label: "收藏统计", description: "显示收藏条目数量" },
+    { key: "showWeeklyActivity" as const, label: "周活动图", description: "显示本周活动热力图" },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-serif font-bold tracking-tight text-primary">Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your data and preferences.</p>
+    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="border-b pb-2 md:pb-4">
+        <h1 className="text-xl md:text-3xl font-serif font-bold tracking-tight text-primary">Settings</h1>
+        <p className="text-muted-foreground text-xs md:text-base mt-0.5 md:mt-2">Manage your data and preferences.</p>
       </div>
-      
-      <div className="grid gap-6">
+
+      <div className="grid gap-4 md:gap-6">
         {/* User Account Section */}
         {isSyncEnabled && user && (
           <Card>
@@ -92,6 +103,52 @@ export default function Settings() {
                 </div>
             )}
             </CardContent>
+        </Card>
+
+        {/* Statistics Display Preferences - Mobile focused */}
+        <Card>
+          <CardHeader className="pb-2 md:pb-4">
+            <div className="flex items-center gap-2 mb-1 md:mb-2">
+              <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              <CardTitle className="text-base md:text-lg">统计页显示设置</CardTitle>
+            </div>
+            <CardDescription className="text-xs md:text-sm">
+              自定义手机端统计页面显示的内容
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 md:space-y-3">
+            {preferenceItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => updatePreference(item.key, !preferences[item.key])}
+                className={cn(
+                  "w-full flex items-center justify-between p-3 md:p-4 border rounded-lg transition-all hover:bg-secondary/20",
+                  preferences[item.key] ? "bg-primary/5 border-primary/20" : "bg-secondary/10"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {preferences[item.key] ? (
+                    <Eye className="h-4 w-4 text-primary" />
+                  ) : (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <div className="text-left">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="text-xs text-muted-foreground hidden md:block">{item.description}</p>
+                  </div>
+                </div>
+                <div className={cn(
+                  "w-10 h-5 rounded-full transition-all relative",
+                  preferences[item.key] ? "bg-primary" : "bg-secondary"
+                )}>
+                  <div className={cn(
+                    "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all",
+                    preferences[item.key] ? "left-5" : "left-0.5"
+                  )} />
+                </div>
+              </button>
+            ))}
+          </CardContent>
         </Card>
       </div>
     </div>

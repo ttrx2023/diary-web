@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { ExerciseItem, ExerciseType } from "@/types/index";
-import { Plus, Trash2, Activity, Dumbbell, Timer, Route, Flame } from "lucide-react";
+import { Plus, Trash2, Activity, Dumbbell, Timer, Route, Flame, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExerciseSectionProps {
@@ -19,6 +20,7 @@ const exerciseTypeConfig: Record<ExerciseType, { icon: typeof Dumbbell; label: s
 };
 
 export function ExerciseSection({ date }: ExerciseSectionProps) {
+  const navigate = useNavigate();
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [exercises, setExercises] = useState<ExerciseItem[]>(entry?.exercises ?? []);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -90,25 +92,44 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-background rounded-md shadow-sm border">
-            <Activity className="h-4 w-4 text-orange-500" />
+    <>
+      {/* Main Content */}
+      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm">
+        {/* Header - Hidden on mobile */}
+        <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-background rounded-md shadow-sm border">
+              <Activity className="h-4 w-4 text-orange-500" />
+            </div>
+            <CardTitle className="text-base font-serif font-bold">Exercise</CardTitle>
           </div>
-          <CardTitle className="text-base font-serif font-bold">Exercise</CardTitle>
+          <div className="flex items-center gap-2">
+            {totalExercises > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/10 text-orange-600">
+                <Flame className="h-3 w-3" />
+                {totalExercises}
+              </span>
+            )}
+          </div>
+          {/* Save Progress Bar */}
+          <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
+        </CardHeader>
+
+        {/* Mobile: Minimal save indicator + Title */}
+        <div className="md:hidden relative">
+          <SaveProgressBar status={saveStatus} className="absolute top-0 left-0 right-0" />
+          <div className="flex items-center justify-between px-1 pt-1 pb-2">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-orange-500" />
+              <span className="text-sm font-semibold">Workout</span>
+            </div>
+            {totalExercises > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {totalExercises} items
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {totalExercises > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/10 text-orange-600">
-              <Flame className="h-3 w-3" />
-              {totalExercises}
-            </span>
-          )}
-        </div>
-        {/* Save Progress Bar */}
-        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
-      </CardHeader>
       <CardContent className="p-0 flex flex-col flex-1 min-h-0">
         {isLoading && (
           <div className="p-6 text-center text-sm text-muted-foreground animate-pulse">
@@ -117,9 +138,9 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
         )}
 
         {!isLoading && exercises.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 bg-secondary/5 flex-1">
-            <div className="p-2 bg-secondary rounded-full">
-              <Dumbbell className="h-5 w-5 text-muted-foreground/50" />
+          <div className="flex flex-col items-center justify-center py-8 md:py-6 text-center space-y-2 flex-1">
+            <div className="p-2 bg-orange-500/10 rounded-full">
+              <Dumbbell className="h-5 w-5 text-orange-500/50" />
             </div>
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-foreground">No exercises yet</p>
@@ -131,7 +152,7 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
         {/* Scrollable Exercise List */}
         {!isLoading && exercises.length > 0 && (
           <div className="relative flex-1 min-h-0">
-            <div className="max-h-[320px] overflow-y-auto scrollbar-thin p-3 space-y-2">
+            <div className="md:max-h-[320px] overflow-y-auto scrollbar-thin p-3 pb-20 md:pb-3 space-y-2">
               {exercises.map((item, index) => {
                 const config = exerciseTypeConfig[item.type];
                 const TypeIcon = config.icon;
@@ -252,15 +273,15 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
                 );
               })}
             </div>
-            {/* Fade overlay */}
+            {/* Fade overlay - Desktop only */}
             {exercises.length > 3 && (
-              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+              <div className="hidden md:block absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
             )}
           </div>
         )}
 
-        {/* Add Button */}
-        <div className="p-3 border-t bg-secondary/10 flex-shrink-0">
+        {/* Add Button - Desktop only */}
+        <div className="hidden md:block p-3 border-t bg-secondary/10 flex-shrink-0 space-y-2">
           <Button
             onClick={addExercise}
             className="w-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-dashed border-orange-500/30 hover:border-orange-500/50 hover:from-orange-500/20 hover:to-amber-500/20 text-orange-600 transition-all shadow-none h-9 text-sm"
@@ -270,8 +291,34 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add Exercise
           </Button>
+
+          {/* View History Link - Desktop only */}
+          <button
+            onClick={() => navigate("/statistics")}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-orange-600 hover:text-orange-700 transition-colors"
+          >
+            <Activity className="h-3.5 w-3.5" />
+            <span>查看锻炼历史</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       </CardContent>
     </Card>
+
+    {/* Mobile: Floating Add Bar */}
+    <div className="md:hidden fixed bottom-14 left-0 right-0 z-40 px-3 pb-2">
+      <div className="p-2 bg-card/95 backdrop-blur-md rounded-xl border shadow-lg">
+        <Button
+          onClick={addExercise}
+          className="w-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-dashed border-orange-500/30 hover:border-orange-500/50 hover:from-orange-500/20 hover:to-amber-500/20 text-orange-600 transition-all shadow-none h-9 text-sm"
+          variant="outline"
+          disabled={isLoading || !entry}
+        >
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Add Exercise
+        </Button>
+      </div>
+    </div>
+  </>
   );
 }

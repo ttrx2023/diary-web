@@ -392,8 +392,8 @@ export function SectionTimeline({ section, entries, onBack, onToggleTodo }: Sect
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-      {/* Header */}
-      <div className="flex items-center gap-3 py-2">
+      {/* Header - Compact on mobile */}
+      <div className="flex items-center gap-2 md:gap-3 py-1 md:py-2">
         <Button
           variant="ghost"
           size="icon"
@@ -402,12 +402,12 @@ export function SectionTimeline({ section, entries, onBack, onToggleTodo }: Sect
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className={cn("p-2 rounded-lg", config.bgColor)}>
-          <Icon className={cn("h-5 w-5", config.color)} />
+        <div className={cn("p-1.5 md:p-2 rounded-md md:rounded-lg", config.bgColor)}>
+          <Icon className={cn("h-4 w-4 md:h-5 md:w-5", config.color)} />
         </div>
-        <div className="flex-1">
-          <h2 className="text-xl font-serif font-bold">{config.title}</h2>
-          <p className="text-sm text-muted-foreground">{filteredEntries.length} entries</p>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base md:text-xl font-serif font-bold truncate">{config.title.replace(" History", "")}</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">{filteredEntries.length} entries</p>
         </div>
       </div>
 

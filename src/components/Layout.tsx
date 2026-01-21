@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { BookOpen, Calendar, Settings as SettingsIcon, Menu, X, Search, BarChart3 } from "lucide-react";
+import { BookOpen, Calendar, Settings as SettingsIcon, Search, BarChart3 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,9 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 export default function Layout() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  const isJournalPage = location.pathname === "/" || location.pathname.startsWith("/?");
 
   // Keyboard shortcut for search
   useEffect(() => {
@@ -37,25 +33,22 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row relative overflow-hidden font-sans text-foreground selection:bg-primary/10">
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <span className="font-serif font-bold text-xl tracking-tight">Diary Web</span>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
-            <Search className="h-5 w-5" />
+      {/* Mobile Header - Hidden on Journal page (has its own nav), shown on other pages */}
+      <div className={cn(
+        "md:hidden flex items-center justify-between px-4 py-2 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50",
+        isJournalPage && "hidden"
+      )}>
+        <span className="font-serif font-bold text-lg tracking-tight">Diary Web</span>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setIsSearchOpen(true)}>
+            <Search className="h-4 w-4" />
           </Button>
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
         </div>
       </div>
 
-      {/* Sidebar (Desktop) / Mobile Menu */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 bg-card border-r shadow-paper transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative md:shadow-none md:h-auto md:bg-transparent",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      {/* Sidebar (Desktop Only) */}
+      <aside className="hidden md:block fixed inset-y-0 left-0 z-40 w-64 bg-card border-r shadow-paper md:relative md:shadow-none md:h-auto md:bg-transparent">
         <div className="p-8 pb-4">
           <h1 className="font-serif font-bold text-3xl tracking-tighter text-primary">
             Diary Web
@@ -125,20 +118,49 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Backdrop for mobile */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden animate-in fade-in"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-10 md:pt-12 overflow-y-auto h-[calc(100vh-64px)] md:h-screen scroll-smooth">
+      <main className="flex-1 p-4 pb-20 md:pb-4 md:p-10 md:pt-12 overflow-y-auto h-[calc(100vh-52px)] md:h-screen scroll-smooth">
         <div className="max-w-5xl mx-auto animate-in fade-in duration-500 slide-in-from-bottom-4">
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t safe-area-bottom">
+        <div className="flex items-center justify-around h-14">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center flex-1 h-full py-1 transition-all duration-200 active:scale-95",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon
+                    className={cn(
+                      "h-5 w-5 mb-0.5 transition-transform duration-200",
+                      isActive && "scale-110"
+                    )}
+                  />
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    isActive && "font-semibold"
+                  )}>
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
 
       {/* Global Search Modal */}
       <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

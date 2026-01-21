@@ -194,6 +194,39 @@
     animation: subtle-pulse 1.5s ease-in-out infinite;
   }
 
+  /* Save progress bar animation */
+  @keyframes save-progress {
+    0% {
+      width: 0%;
+    }
+    50% {
+      width: 70%;
+    }
+    100% {
+      width: 95%;
+    }
+  }
+
+  @keyframes save-complete {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .animate-save-progress {
+    animation: save-progress 1s ease-out forwards;
+  }
+
+  .animate-save-complete {
+    animation: save-complete 0.6s ease-out 0.2s forwards;
+  }
+
   /* ===== Hover Effects ===== */
 
   /* Button hover lift */

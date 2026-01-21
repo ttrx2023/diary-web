@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { DiscoveryItem, DiscoveryCategory } from "@/types/index";
 import { Plus, Trash2, Lightbulb, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,7 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
   const [discoveries, setDiscoveries] = useState<DiscoveryItem[]>(entry?.discoveries ?? []);
   const [newContent, setNewContent] = useState("");
   const [newCategory, setNewCategory] = useState<DiscoveryCategory>("idea");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   useEffect(() => {
     setDiscoveries(entry?.discoveries ?? []);
@@ -76,7 +78,13 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
 
   const save = (newDiscoveries: DiscoveryItem[]) => {
     if (!entry) return;
+    setSaveStatus("saving");
     updateEntry({ ...entry, discoveries: newDiscoveries });
+    // Show saved status briefly
+    setTimeout(() => {
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 800);
+    }, 300);
   };
 
   const addDiscovery = () => {
@@ -134,7 +142,7 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
 
   return (
     <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-background rounded-md shadow-sm border">
             <Lightbulb className="h-4 w-4 text-yellow-500" />
@@ -149,6 +157,8 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
             </span>
           )}
         </div>
+        {/* Save Progress Bar */}
+        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
       <CardContent className="p-0 flex flex-col flex-1 min-h-0">
         {isLoading && (

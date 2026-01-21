@@ -144,18 +144,19 @@ function DietPreview({ entry }: { entry: DailyEntry }) {
     { key: "snacks", icon: Apple, label: "零食", value: snacks, color: "text-green-500", bgColor: "bg-green-500/10" },
   ];
 
+  // Only show meals that have been recorded
+  const filledMeals = meals.filter(meal => meal.value);
+
   return (
     <div className="space-y-2">
-      {meals.map(({ key, icon: Icon, label, value, color, bgColor }) => (
+      {filledMeals.map(({ key, icon: Icon, label, value, color, bgColor }) => (
         <div key={key} className="flex items-start gap-2 text-sm">
           <div className={cn("p-1 rounded flex-shrink-0", bgColor)}>
             <Icon className={cn("h-3 w-3", color)} />
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-muted-foreground text-xs">{label}:</span>
-            <span className={cn("ml-1", value ? "text-foreground" : "text-muted-foreground/40 italic")}>
-              {value || "未记录"}
-            </span>
+            <span className="ml-1 text-foreground">{value}</span>
           </div>
         </div>
       ))}

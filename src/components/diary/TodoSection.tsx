@@ -3,8 +3,9 @@ import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { TodoItem } from "@/types/index";
-import { Plus, Trash2, CheckSquare, Square, ListTodo, GripVertical, Check } from "lucide-react";
+import { Plus, Trash2, CheckSquare, Square, ListTodo, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -151,7 +152,7 @@ export function TodoSection({ date }: TodoSectionProps) {
     // Show saved status briefly
     setTimeout(() => {
       setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 1500);
+      setTimeout(() => setSaveStatus("idle"), 800);
     }, 300);
   }, [entry, updateEntry]);
 
@@ -233,7 +234,7 @@ export function TodoSection({ date }: TodoSectionProps) {
 
   return (
     <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-background rounded-md shadow-sm border">
             <ListTodo className="h-4 w-4 text-purple-500" />
@@ -241,28 +242,9 @@ export function TodoSection({ date }: TodoSectionProps) {
           <CardTitle className="text-base font-serif font-bold">Tasks</CardTitle>
         </div>
         <div className="flex items-center gap-2">
-          {/* Save Status Indicator */}
-          <div className={cn(
-            "flex items-center gap-1 text-[10px] font-medium transition-all duration-300",
-            saveStatus === "idle" && "opacity-0",
-            saveStatus === "saving" && "text-muted-foreground opacity-100",
-            saveStatus === "saved" && "text-green-600 opacity-100"
-          )}>
-            {saveStatus === "saving" && (
-              <div className="h-2 w-2 rounded-full bg-muted-foreground animate-pulse" />
-            )}
-            {saveStatus === "saved" && (
-              <Check className="h-3 w-3" />
-            )}
-            <span>{saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : ""}</span>
-          </div>
-
           {/* Mini Progress Bar with x/y inside */}
           {totalCount > 0 && (
-            <div className={cn(
-              "relative w-16 h-5 bg-secondary rounded-full overflow-hidden transition-all duration-300",
-              saveStatus === "saving" && "animate-pulse"
-            )}>
+            <div className="relative w-16 h-5 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-purple-500 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${progressPercent}%` }}
@@ -273,6 +255,8 @@ export function TodoSection({ date }: TodoSectionProps) {
             </div>
           )}
         </div>
+        {/* Save Progress Bar */}
+        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
       <CardContent className="p-0 flex flex-col flex-1 min-h-0">
         {isLoading && (

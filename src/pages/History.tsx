@@ -5,7 +5,7 @@ import type { DailyEntry } from "@/types/index";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, ChevronLeft, ChevronRight, BookOpen, Utensils, Activity, ListTodo, Download, Star, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import { ExportModal } from "@/components/export/ExportModal";
 import { cn } from "@/lib/utils";
 
@@ -80,8 +80,10 @@ export default function History() {
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const firstDayOfWeek = monthStart.getDay();
+  // Get full calendar grid including days from prev/next month
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
 
   // Calculate statistics
@@ -143,7 +145,7 @@ export default function History() {
               <>
                 {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-1">
-                  {/* Week day headers */}
+                                  {/* Week day headers */}
                   {weekDays.map((day, i) => (
                     <div
                       key={i}
@@ -153,13 +155,8 @@ export default function History() {
                     </div>
                   ))}
 
-                  {/* Empty cells */}
-                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                    <div key={`empty-${i}`} className="h-10" />
-                  ))}
-
-                  {/* Calendar days */}
-                  {daysInMonth.map((day) => {
+                  {/* Calendar days - includes prev/next month days */}
+                  {calendarDays.map((day) => {
                     const dateStr = format(day, "yyyy-MM-dd");
                     const entry = entries[dateStr];
                     const hasEntry = !!entry;
@@ -179,15 +176,17 @@ export default function History() {
                         onClick={() => goToDate(day)}
                         className={cn(
                           "relative h-10 rounded-md transition-all hover:bg-secondary/80 group",
-                          isCurrentMonth ? "opacity-100" : "opacity-30",
+                          isCurrentMonth ? "opacity-100" : "opacity-40 text-muted-foreground",
                           isTodayDate && "ring-2 ring-primary ring-offset-1",
-                          hasEntry && "bg-secondary/50"
+                          hasEntry && isCurrentMonth && "bg-secondary/50",
+                          hasEntry && !isCurrentMonth && "bg-secondary/30"
                         )}
                       >
                         <div className="flex flex-col items-center justify-center h-full">
                           <span className={cn(
                             "text-xs font-medium",
-                            isTodayDate && "text-primary font-bold"
+                            isTodayDate && "text-primary font-bold",
+                            !isCurrentMonth && "text-muted-foreground"
                           )}>
                             {format(day, "d")}
                           </span>
@@ -195,17 +194,17 @@ export default function History() {
                           {/* Content indicator dots */}
                           {hasEntry && (
                             <div className="flex gap-0.5 mt-0.5">
-                              {hasThoughts && <div className="w-1 h-1 rounded-full bg-blue-500" />}
-                              {hasDiet && <div className="w-1 h-1 rounded-full bg-green-500" />}
-                              {hasExercise && <div className="w-1 h-1 rounded-full bg-orange-500" />}
-                              {hasTodos && <div className="w-1 h-1 rounded-full bg-purple-500" />}
+                              {hasThoughts && <div className={cn("w-1 h-1 rounded-full bg-blue-500", !isCurrentMonth && "opacity-50")} />}
+                              {hasDiet && <div className={cn("w-1 h-1 rounded-full bg-green-500", !isCurrentMonth && "opacity-50")} />}
+                              {hasExercise && <div className={cn("w-1 h-1 rounded-full bg-orange-500", !isCurrentMonth && "opacity-50")} />}
+                              {hasTodos && <div className={cn("w-1 h-1 rounded-full bg-purple-500", !isCurrentMonth && "opacity-50")} />}
                             </div>
                           )}
                         </div>
 
                         {/* Favorite star */}
                         {isFavorite && (
-                          <Star className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-yellow-500 fill-current" />
+                          <Star className={cn("absolute top-0.5 right-0.5 h-2.5 w-2.5 text-yellow-500 fill-current", !isCurrentMonth && "opacity-50")} />
                         )}
                       </button>
                     );

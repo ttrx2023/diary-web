@@ -3,6 +3,7 @@ import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { DietEntry } from "@/types/index";
 import { Utensils, Coffee, Sun, Moon, Apple } from "lucide-react";
 
@@ -20,6 +21,7 @@ const emptyDiet: DietEntry = {
 export function DietSection({ date }: DietSectionProps) {
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [diet, setDiet] = useState<DietEntry>(entry?.diet ?? emptyDiet);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   useEffect(() => {
     setDiet(entry?.diet ?? emptyDiet);
@@ -31,10 +33,16 @@ export function DietSection({ date }: DietSectionProps) {
 
   const handleBlur = () => {
     if (entry && JSON.stringify(diet) !== JSON.stringify(entry.diet)) {
+      setSaveStatus("saving");
       updateEntry({
         ...entry,
         diet: diet,
       });
+      // Show saved status briefly
+      setTimeout(() => {
+        setSaveStatus("saved");
+        setTimeout(() => setSaveStatus("idle"), 800);
+      }, 300);
     }
   };
 
@@ -42,13 +50,15 @@ export function DietSection({ date }: DietSectionProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b bg-secondary/20">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b bg-secondary/20 relative">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-background rounded-lg shadow-sm border">
             <Utensils className="h-5 w-5 text-primary" />
           </div>
           <CardTitle className="text-xl font-serif font-bold">Diet Log</CardTitle>
         </div>
+        {/* Save Progress Bar */}
+        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         <div className="grid gap-4">

@@ -3,6 +3,7 @@ import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { ExerciseItem, ExerciseType } from "@/types/index";
 import { Plus, Trash2, Activity, Dumbbell, Timer, Route, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const exerciseTypeConfig: Record<ExerciseType, { icon: typeof Dumbbell; label: s
 export function ExerciseSection({ date }: ExerciseSectionProps) {
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [exercises, setExercises] = useState<ExerciseItem[]>(entry?.exercises ?? []);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   useEffect(() => {
     setExercises(entry?.exercises ?? []);
@@ -27,7 +29,13 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
 
   const save = (newExercises: ExerciseItem[]) => {
     if (!entry) return;
+    setSaveStatus("saving");
     updateEntry({ ...entry, exercises: newExercises });
+    // Show saved status briefly
+    setTimeout(() => {
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 800);
+    }, 300);
   };
 
   const addExercise = () => {
@@ -83,7 +91,7 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
 
   return (
     <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-background rounded-md shadow-sm border">
             <Activity className="h-4 w-4 text-orange-500" />
@@ -98,6 +106,8 @@ export function ExerciseSection({ date }: ExerciseSectionProps) {
             </span>
           )}
         </div>
+        {/* Save Progress Bar */}
+        <SaveProgressBar status={saveStatus} className="absolute bottom-0 left-0 right-0" />
       </CardHeader>
       <CardContent className="p-0 flex flex-col flex-1 min-h-0">
         {isLoading && (

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useDiaryEntry } from "@/hooks/useDiary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SaveProgressBar } from "@/components/ui/save-progress-bar";
 import type { ExerciseItem, ExerciseType } from "@/types/index";
-import { Plus, Trash2, Activity, Dumbbell, Timer, Route, Flame, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Activity, Dumbbell, Timer, Route, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExerciseSectionProps {
@@ -20,7 +19,6 @@ const exerciseTypeConfig: Record<ExerciseType, { icon: typeof Dumbbell; label: s
 };
 
 export function ExerciseSection({ date }: ExerciseSectionProps) {
-  const navigate = useNavigate();
   const { entry, updateEntry, isLoading } = useDiaryEntry(date);
   const [exercises, setExercises] = useState<ExerciseItem[]>(entry?.exercises ?? []);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");

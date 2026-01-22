@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, PenLine, Utensils, Lightbulb, Dumbbell, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +27,6 @@ export function MobileSectionTabs({
   date,
   onDateChange,
 }: MobileSectionTabsProps) {
-  const navigate = useNavigate();
   const lastClickTimeRef = useRef<number>(0);
   const lastClickSectionRef = useRef<SectionType | null>(null);
 

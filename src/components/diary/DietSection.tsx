@@ -49,7 +49,7 @@ export function DietSection({ date }: DietSectionProps) {
   const isInteractive = !isLoading && !!entry;
 
   return (
-    <Card className="overflow-hidden border-0 md:border shadow-none md:shadow-sm">
+    <Card className="overflow-hidden border-0 md:border shadow-none md:shadow-sm bg-transparent md:bg-card">
       {/* Header - Hidden on mobile */}
       <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 md:pb-6 px-4 md:px-6 border-b bg-secondary/20 relative">
         <div className="flex items-center gap-2 md:gap-3">

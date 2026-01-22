@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition, useMemo } from 'react';
+import { useEffect, useState, useTransition, useMemo, useRef } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { ThoughtsSection } from "@/components/diary/ThoughtsSection";
 import { DietSection } from "@/components/diary/DietSection";
@@ -6,7 +6,9 @@ import { ExerciseSection } from "@/components/diary/ExerciseSection";
 import { TodoSection } from "@/components/diary/TodoSection";
 import { DiscoverySection } from "@/components/diary/DiscoverySection";
 import { MobileSectionTabs, type SectionType } from "@/components/diary/MobileSectionTabs";
+import { MobileHistoryOverlay } from "@/components/diary/MobileHistoryOverlay";
 import { useDiaryEntry, usePrefetchDates } from "@/hooks/useDiary";
+import { api } from "@/lib/api";
 import { Star, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,11 +38,69 @@ export default function Dashboard() {
   const [isPending, startTransition] = useTransition();
   const [activeSection, setActiveSection] = useState<SectionType>("thoughts");
 
+  // History Overlay State
+  const [showHistory, setShowHistory] = useState(false);
+  const [historySection, setHistorySection] = useState<SectionType | null>(null);
+
   const { entry, updateEntry, isFetching } = useDiaryEntry(date);
   const { prefetchAdjacent } = usePrefetchDates(date);
 
   const displayDateText = useMemo(() => formatDisplayDate(date), [date]);
   const isToday = useMemo(() => date === getTodayString(), [date]);
+
+  // Auto-migrate unfinished todos from yesterday
+  const hasCheckedMigration = useRef(false);
+
+  useEffect(() => {
+    const checkMigration = async () => {
+      // Only run if it's today, we have an entry, and haven't checked yet in this session
+      if (!isToday || !entry || hasCheckedMigration.current) return;
+
+      hasCheckedMigration.current = true;
+
+      try {
+        const yesterday = new Date(date);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        const prevEntry = await api.getEntryByDate(yesterdayStr);
+
+        if (prevEntry && prevEntry.todos && prevEntry.todos.length > 0) {
+          const unfinished = prevEntry.todos.filter(t => !t.completed);
+
+          if (unfinished.length > 0) {
+             // Filter out tasks that already exist in today's list (matching by text)
+             const currentTexts = new Set((entry.todos || []).map(t => t.text));
+             const toMigrate = unfinished.filter(t => !currentTexts.has(t.text));
+
+             if (toMigrate.length > 0) {
+               console.log("Migrating todos:", toMigrate);
+               const newTodos = [
+                 ...toMigrate.map(t => ({
+                   ...t,
+                   id: crypto.randomUUID(),
+                   createdAt: new Date().toISOString(),
+                   // Add a subtle indicator or just keep text as is
+                   text: t.text
+                 })),
+                 ...(entry.todos || [])
+               ];
+               updateEntry({ ...entry, todos: newTodos });
+             }
+          }
+        }
+      } catch (e) {
+        console.error("Migration check failed", e);
+      }
+    };
+
+    checkMigration();
+  }, [isToday, date, entry, updateEntry]);
+
+  // Reset migration check when date changes
+  useEffect(() => {
+    hasCheckedMigration.current = false;
+  }, [date]);
 
   useEffect(() => {
     if (dateParam && dateParam !== date) {
@@ -87,13 +147,28 @@ export default function Dashboard() {
     updateEntry({ ...entry, isFavorite: !entry.isFavorite });
   };
 
+  const handleDoubleTap = (section: SectionType) => {
+    setHistorySection(section);
+    setShowHistory(true);
+  };
+
   return (
     <div className="space-y-3 pb-4">
+      {/* Mobile History Overlay */}
+      {showHistory && (
+        <MobileHistoryOverlay
+          section={historySection}
+          onClose={() => setShowHistory(false)}
+          onSelectDate={handleDateChange}
+        />
+      )}
+
       {/* Mobile Tab Navigation - Only visible on mobile */}
       <div className="md:hidden -mx-4 -mt-4">
         <MobileSectionTabs
           activeSection={activeSection}
           onSectionChange={setActiveSection}
+          onDoubleTap={handleDoubleTap}
           date={date}
           onDateChange={handleDateChange}
         />

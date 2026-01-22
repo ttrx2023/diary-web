@@ -143,7 +143,7 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
   return (
     <>
       {/* Main Content */}
-      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm">
+      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm bg-transparent md:bg-card">
         {/* Header - Hidden on mobile */}
         <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
           <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export function DiscoverySection({ date }: DiscoverySectionProps) {
                   return (
                     <div
                       key={item.id}
-                      className="group bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
+                      className="group bg-card md:bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200"
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
                       <div className="flex items-start gap-2 p-3">

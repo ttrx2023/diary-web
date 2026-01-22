@@ -5,13 +5,25 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import History from "./pages/History";
-import Settings from "./pages/Settings";
-import Statistics from "./pages/Statistics";
-import Auth from "./pages/Auth";
+import { lazy, Suspense } from "react";
+
+// Lazy load pages for performance
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const History = lazy(() => import("./pages/History"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Statistics = lazy(() => import("./pages/Statistics"));
+const Auth = lazy(() => import("./pages/Auth"));
 
 const queryClient = new QueryClient();
+
+// Loading Spinner Component
+function PageLoader() {
+  return (
+    <div className="flex h-[50vh] w-full items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,22 +53,24 @@ function AppRoutes() {
   const { user } = useAuth();
 
   return (
-    <Routes>
-      <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/" replace />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="history" element={<History />} />
-        <Route path="statistics" element={<Statistics />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/" replace />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="history" element={<History />} />
+          <Route path="statistics" element={<Statistics />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

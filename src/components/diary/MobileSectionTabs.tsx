@@ -8,6 +8,7 @@ export type SectionType = "thoughts" | "diet" | "discovery" | "todo" | "exercise
 interface MobileSectionTabsProps {
   activeSection: SectionType;
   onSectionChange: (section: SectionType) => void;
+  onDoubleTap?: (section: SectionType) => void;
   date: string;
   onDateChange: (date: string) => void;
 }
@@ -23,6 +24,7 @@ const sections: { id: SectionType; icon: typeof PenLine }[] = [
 export function MobileSectionTabs({
   activeSection,
   onSectionChange,
+  onDoubleTap,
   date,
   onDateChange,
 }: MobileSectionTabsProps) {
@@ -48,9 +50,11 @@ export function MobileSectionTabs({
       lastClickSectionRef.current === sectionId &&
       now - lastClickTimeRef.current < 300;
 
-    // If double-clicking on exercise while already active, go directly to exercise history
-    if (sectionId === "exercise" && activeSection === "exercise" && isDoubleClick) {
-      navigate("/statistics?section=exercise");
+    // Handle double click
+    if (isDoubleClick && onDoubleTap) {
+      onDoubleTap(sectionId);
+      // Reset to avoid triple-click triggering twice
+      lastClickTimeRef.current = 0;
       return;
     }
 

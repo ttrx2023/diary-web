@@ -75,6 +75,18 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Mobile optimizations */
+    overscroll-behavior-y: none; /* Prevents browser rubber-banding */
+    touch-action: manipulation;   /* Improves touch response, disables double-tap zoom */
+    -webkit-tap-highlight-color: transparent; /* Removes iOS grey tap highlight */
+    -webkit-user-select: none;    /* Prevents accidental text selection */
+    user-select: none;
+  }
+
+  /* Allow text selection on inputs and textareas */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;

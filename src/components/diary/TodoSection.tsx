@@ -57,7 +57,7 @@ function SortableTodoItem({ item, onToggle, onRemove, onUpdateText, onBlur }: So
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
+        "group bg-card md:bg-background rounded-lg border shadow-sm hover:shadow-md transition-all duration-200",
         item.completed && "opacity-70",
         isDragging && "opacity-50 shadow-lg z-50"
       )}
@@ -237,7 +237,7 @@ export function TodoSection({ date }: TodoSectionProps) {
   return (
     <>
       {/* Main Content */}
-      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm">
+      <Card className="overflow-hidden flex flex-col border-0 md:border shadow-none md:shadow-sm bg-transparent md:bg-card">
         {/* Header - Hidden on mobile */}
         <CardHeader className="hidden md:flex flex-row items-center justify-between space-y-0 py-3 px-4 border-b bg-secondary/20 flex-shrink-0 relative">
           <div className="flex items-center gap-2">

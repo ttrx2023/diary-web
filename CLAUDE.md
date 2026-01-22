@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build & Test Commands
+## Commands
 
 - **Start Dev Server**: `npm run dev` (Runs on http://localhost:5173)
 - **Build for Production**: `npm run build` (Type-check and build to `dist/`)
@@ -10,41 +10,48 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Preview Build**: `npm run preview`
 - **Install Dependencies**: `npm install`
 
-*Note: No test runner is currently configured.*
+## Architecture & Structure
 
-## Architecture & Codebase Structure
+### Core Stack
+- **Framework**: React 19 + TypeScript + Vite 7.
+- **PWA**: `vite-plugin-pwa` for offline support and installation.
+- **State Management**:
+  - **Server State**: TanStack Query (`@tanstack/react-query`) for data fetching/syncing.
+  - **Global State**: React Context (`AuthContext`, `ThemeContext`).
+  - **Drag & Drop**: `@dnd-kit` (used in Todo/Sortable lists).
+- **Styling**: Tailwind CSS + shadcn/ui. Utils: `clsx`, `tailwind-merge` (via `cn` helper).
 
-### Core Architecture
-React 19 + TypeScript SPA with a dual-mode backend (abstracted via `src/lib/api.ts`):
-1.  **Local Mode**: Offline-first using `localStorage` (default, no auth).
-2.  **Cloud Sync Mode**: Uses Supabase (PostgreSQL + Auth) when configured.
+### Data Layer (Dual-Mode)
+The app runs in two modes, abstracted via `src/lib/api.ts`:
+1.  **Local Mode**: `src/lib/mockApi.ts` - Uses `localStorage` (offline-first).
+2.  **Cloud Mode**: `src/lib/supabaseApi.ts` - Uses Supabase (PostgreSQL + Auth).
 
-### Key Directories
-- `src/lib/`: Core API abstraction (`api.ts` switches implementation).
-- `src/hooks/`: React Query hooks (`useDiary.ts`) consuming the API.
-- `src/components/diary/`: Feature components (Thoughts, Diet, Exercise, Todo).
-- `src/contexts/`: Global state (AuthContext).
-- `src/types/`: Shared type definitions.
-
-### State Management
-- **Server State**: TanStack Query (React Query) for fetching/syncing.
-- **Auth State**: React Context (`AuthContext.tsx`) for Supabase sessions.
-- **Local UI**: Standard React hooks (`useState`, `useReducer`).
+### Directory Overview
+- `src/lib/`: Core logic. `api.ts` is the central interface. `exportService.ts` handles data export.
+- `src/hooks/`: React Query hooks (`useDiary.ts`, `useAllEntries.ts`) and auth/preference hooks.
+- `src/components/diary/`: Feature modules (Thoughts, Diet, Exercise, Todo, Discovery).
+- `src/components/ui/`: Reusable shadcn/ui components.
+- `src/contexts/`: `AuthContext` (User session), `ThemeContext` (Dark/Light mode).
+- `src/pages/`: Route targets (Lazy loaded).
+- `src/types/`: Shared definitions (`DailyEntry`, `Thought`, etc.).
 
 ## Development Guidelines
 
-### Data Model Changes
-The central entity is `DailyEntry` (keyed by `YYYY-MM-DD`). To modify:
-1.  Update `DailyEntry` in `src/types/index.ts`.
-2.  Update **BOTH** `src/lib/mockApi.ts` (local) and `src/lib/supabaseApi.ts` (cloud).
-3.  If using Supabase, add SQL migration for `daily_entries`.
+### Performance & PWA
+- **Code Splitting**: Routes are lazy-loaded in `App.tsx` using `React.lazy` + `Suspense`.
+- **Mobile Optimization**: `index.css` contains strict rules (`touch-action: manipulation`, `overscroll-behavior-y: none`) for native-like feel.
+- **Meta Tags**: `index.html` includes `mobile-web-app-capable` tags for PWA support.
 
-### Styling & UI
-- **Framework**: Tailwind CSS + shadcn/ui.
-- **Components**: Use `src/components/ui/` for primitives.
-- **Utils**: Use `cn()` for class merging.
+### Modifying the Data Model
+The central entity is `DailyEntry` (keyed by date string `YYYY-MM-DD`). To add fields or sections:
+1.  **Type Definition**: Update interfaces in `src/types/index.ts`.
+2.  **API Implementation**: You **MUST** update implementations in both:
+    - `src/lib/mockApi.ts` (Local storage logic)
+    - `src/lib/supabaseApi.ts` (Supabase logic)
+3.  **Database**: If using Supabase, ensure SQL migrations match the schema changes.
 
 ### Conventions
-- **Imports**: Absolute imports with `@/`.
-- **Dates**: `YYYY-MM-DD` strings, manipulated via `date-fns`.
-- **Strict Mode**: No `any` types.
+- **Imports**: Use absolute imports with `@/` (e.g., `import { Button } from "@/components/ui/button"`).
+- **Dates**: Use `YYYY-MM-DD` string format for storage keys. Use `date-fns` for manipulation.
+- **Strict Mode**: No `any` types. Ensure strict null checks.
+- **UI Components**: Place reusable primitives in `src/components/ui/`.
